@@ -4,24 +4,34 @@
     "slug": "ePharma",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/Logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1443C3"
     },
+    "plugins": [
+      "@react-native-google-signin/google-signin",
+      "expo-font"
+    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "foregroundImage": "./assets/Logo.png",
+        "backgroundColor": "#1443C3"
+      },
+      "package": "com.hillztech.ePharma"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/Logo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f83ca6c1-e857-44d1-8a0b-24bef356d63f"
+      }
     }
   }
 }
