@@ -210,7 +210,7 @@ const handleGoogleSignIn = async () => {
 
     </View>
      
-    <Text style={{fontFamily:'Poppins-ExtraBold', fontSize:RFValue(16), color:'black', textAlign:'center', opacity:0.7, bottom:hp('13%')}}>or </Text>
+    <Text style={{fontFamily:'OpenSans-ExtraBold', fontSize:RFValue(16), color:'black', textAlign:'center', opacity:0.7, bottom:hp('13%')}}>OR </Text>
     
 
     <View style={{justifyContent:'center', alignItems:'center'}}>

@@ -21,11 +21,19 @@ import { initializeApp } from 'firebase/app';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import firebase from 'firebase/compat/app';
 import UploadScreen from './Screens/UploadScreen';
-import { DataProvider } from './contexts/DataContext';
+import { CategoriesProvider } from './contexts/CategoriesContext';
 import SuccessfulUpload from './Screens/SuccessfulUpload';
 import InventoryScreen from './Screens/InventoryScreen';
 import CategoryScreen from './Screens/CategoryScreen';
 import CategoryDetailsScreen from './Screens/CategoryDetailsScreen';
+import EditProductScreen from './Screens/EditProductScreen';
+import RetailerProfile from './Screens/RetailerProfile';
+import PharmacyInfo from './Screens/PharmacyInfo';
+import { CartProvider } from './contexts/CartContext';
+import PharmacyDetailsScreen from './Screens/PharmacyDetailsScreen';
+import AddToCartScreen from './Screens/AddToCartScreen';
+import { ProductProvider } from './contexts/ProductContext';
+import CartScreen from './Screens/CartScreen';
 
 
 
@@ -82,7 +90,9 @@ export default function App() {
     <SignInContextProvider>
       <LocationContextProvider>
         <AvatarProvider>
-        <DataProvider>
+        <CategoriesProvider>
+        <CartProvider>
+        <ProductProvider>
           <NavigationContainer>
             <Stack.Navigator
               initialRouteName="Intro"
@@ -107,9 +117,17 @@ export default function App() {
               <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
               <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
               <Stack.Screen name="CategoryDetails" component={CategoryDetailsScreen} />
+              <Stack.Screen name="EditProductScreen" component={EditProductScreen} />
+              <Stack.Screen name="RetailerProfile" component={RetailerProfile} />
+              <Stack.Screen name="PharmacyInfo" component={PharmacyInfo} />
+              <Stack.Screen name="AddToCartScreen" component={AddToCartScreen} />
+              <Stack.Screen name="CartScreen" component={CartScreen} />
+              <Stack.Screen name="PharmacyDetailsScreen" component={PharmacyDetailsScreen} options={{ title: 'Pharmacy Details' }}/>
             </Stack.Navigator>
           </NavigationContainer>
-          </DataProvider>
+          </ProductProvider>
+          </CartProvider>
+          </CategoriesProvider>
         </AvatarProvider>
       </LocationContextProvider>
     </SignInContextProvider>

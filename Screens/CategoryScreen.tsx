@@ -6,6 +6,10 @@ import { db, storage } from "../Components/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import LoadingOverlay from "../Components/LoadingOverlay";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { RFValue } from "react-native-responsive-fontsize";
+import { Ionicons } from "@expo/vector-icons";
+import { useCategories } from "../contexts/CategoriesContext";
 
 interface Category {
     id: string;
@@ -14,52 +18,40 @@ interface Category {
 }
 
 const CategoryScreen: React.FC = () => {
-    const [categories, setCategories] = useState<Category[]>([]);
+    const { categories, loading } = useCategories(); 
+
     const [isLoading, setLoading] = useState(false);
     const navigation = useNavigation<any>();
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            setLoading(true);
-            try {
-                const categoriesRef = collection(db, "categories");
-                const querySnapshot = await getDocs(categoriesRef);
-                const categoriesList = await Promise.all(querySnapshot.docs.map(async (doc) => {
-                    const data = doc.data();
-                    const imageUrl = await getDownloadURL(ref(storage, data.imageUrl));
-                    return {
-                        id: doc.id,
-                        name: data.name || doc.id, // Fallback to doc ID if name isn't available
-                        imageUrl: imageUrl || '', // Ensure imageUrl is converted
-                    };
-                }));
-                setCategories(categoriesList);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchCategories();
-    }, []);
-
+   
     const handleCategoryPress = (category: string) => {
         navigation.navigate('CategoryDetails', { category });
     };
 
+    const handleBack =  () => {
+     navigation.navigate('HomeScreen');
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             {isLoading && <LoadingOverlay />}
-            <FlatList
+            <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:wp('1%'), marginBottom:hp('-1%'), bottom:hp('2%')}}>
+    <TouchableOpacity  onPress={handleBack}>
+    <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+    </TouchableOpacity>
+    
+   <Text style={{fontFamily:'Poppins-Bold', fontSize:RFValue(18), right:wp('40%')}}>Categories</Text>
+  
+   </View>
+   <FlatList
                 data={categories}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.name}
                 numColumns={2} // Display two items in a row
                 key={2} // This key ensures FlatList re-renders properly when numColumns is fixed
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         style={styles.categoryButton}
-                        onPress={() => handleCategoryPress(item.id)}
+                        onPress={() => handleCategoryPress(item.name)}
                     >
                         <Image source={{ uri: item.imageUrl }} style={styles.categoryImage} />
                         <Text style={styles.categoryText}>{item.name}</Text>
@@ -74,27 +66,30 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#D3D3D3',
-        padding: 16,
+        padding: hp('2%'),
     },
     categoryButton: {
-        flex: 1,
+        
         alignItems: 'center',
         justifyContent: 'center',
-        margin: 8,
         backgroundColor: 'white',
+        marginHorizontal:  hp('1.6%'),
+        marginVertical:  hp('1%'),
         borderRadius: 8,
-        padding: 16,
+        padding: hp('2%'),
     },
     categoryImage: {
-        width: 100,
-        height: 100,
+        width:  wp('30%'),
+        height:  hp('11%'),
         borderRadius: 15,
-        marginBottom: 8,
+        marginBottom:  hp('1%'),
     },
     categoryText: {
         color: 'black',
-        fontSize: 18,
+        fontSize: RFValue(15),
         textAlign: 'center',
+        fontFamily:'OpenSans-Bold',
+        maxWidth:wp('30%')
     },
 });
 

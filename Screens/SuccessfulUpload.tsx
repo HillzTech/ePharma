@@ -13,7 +13,7 @@ const SuccessfulUpload: React.FC<{ navigation: any }> = ({ navigation }) => {
   return (
     <SafeAreaView style={{flex:1}}>
     <View style={{flexDirection:'column', alignItems:'center', justifyContent:'center', marginBottom:hp('8%'), top:hp('5%')}}>
-     <ImageBackground source={require('../assets/Group3645.png')} style={{width:wp('35%'), height:hp('20%'), left:wp('2%')}}>
+     <ImageBackground source={require('../assets/Group3645.png')} style={{width:wp('35%'), height:hp('20%'), top:wp('8%')}}>
 
      </ImageBackground>
 

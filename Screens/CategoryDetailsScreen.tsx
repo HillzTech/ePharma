@@ -1,29 +1,61 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, FlatList } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ScrollView, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { db } from "../Components/firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import LoadingOverlay from "../Components/LoadingOverlay";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { Ionicons } from "@expo/vector-icons";
+import { RFValue } from "react-native-responsive-fontsize";
+import GetLocation from 'react-native-get-location';
+import haversine from 'haversine-distance';
 
 interface Product {
     id: string;
     title: string;
     price: number;
     imageUrls: string[];
+    tags: string[];
+    location: { latitude: number; longitude: number };
+    distance: number;
 }
 
-const CategoryDetailsScreen: React.FC = () => {
-    const route = useRoute<any>();
+const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
     const { category } = route.params;
     const [products, setProducts] = useState<Product[]>([]);
-    const [isLoading, setLoading] = useState(false);
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [tags, setTags] = useState<string[]>(['All']);
+    const [selectedTag, setSelectedTag] = useState<string>('All');
+    const [isLoading, setLoading] = useState(true);
+    const [categoryName, setCategoryName] = useState<string>('');
+    const [userLocation, setUserLocation] = useState({ latitude: 0, longitude: 0 });
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            setLoading(true);
+        const fetchUserLocation = async () => {
             try {
-                // Navigate to the correct subcollection within the category document
+                const location = await GetLocation.getCurrentPosition({
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                });
+                setUserLocation({ latitude: location.latitude, longitude: location.longitude });
+                return location; // Return location to ensure it's fetched before products
+            } catch (error) {
+                console.error('Error fetching user location:', error);
+                setLoading(false);
+            }
+        };
+
+        const fetchCategoryDetails = async (location: any) => {
+            try {
+                // Fetch the category name
+                const categoryRef = doc(db, 'categories', category);
+                const categoryDoc = await getDoc(categoryRef);
+                if (categoryDoc.exists()) {
+                    setCategoryName(categoryDoc.data().name);
+                }
+        
+                // Fetch products under the category
                 const productsRef = collection(db, `categories/${category}/products`);
                 const querySnapshot = await getDocs(productsRef);
                 const productsList: Product[] = querySnapshot.docs.map(doc => {
@@ -33,35 +65,102 @@ const CategoryDetailsScreen: React.FC = () => {
                         title: data.title || '',
                         price: data.price || 0,
                         imageUrls: data.imageUrls || [],
+                        tags: data.tags || [],
+                        location: data.location || { latitude: 0, longitude: 0 },
+                        distance: 0,
                     };
                 });
-                setProducts(productsList);
-                console.log('Fetched Products:', productsList);
+        
+                // Calculate distances in miles and sort products by distance
+                const productsWithDistance = productsList.map(product => {
+                    const distanceInMiles = haversine(
+                        { latitude: location.latitude, longitude: location.longitude },
+                        product.location
+                    ) / 1609.34; // Convert meters to miles
+                    return { ...product, distance: Math.round(distanceInMiles) }; // Round to nearest whole number
+                }).sort((a, b) => a.distance - b.distance); // Sort by closest distance
+
+                // Fetch unique tags
+                const uniqueTags = Array.from(new Set(productsList.flatMap(product => product.tags)));
+                setTags(['All', ...uniqueTags]);
+
+                setProducts(productsWithDistance);
+                setFilteredProducts(productsWithDistance);
             } catch (error) {
-                console.error('Error fetching products:', error);
+                console.error('Error fetching category details:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchProducts();
+        const initializeScreen = async () => {
+            const location = await fetchUserLocation(); // Ensure location is fetched first
+            if (location) {
+                fetchCategoryDetails(location);
+            }
+        };
+
+        initializeScreen();
     }, [category]);
+
+    const filterProductsByTag = (tag: string) => {
+        if (tag === 'All') {
+            setFilteredProducts(products);
+        } else {
+            setFilteredProducts(products.filter(product => product.tags.includes(tag)));
+        }
+        setSelectedTag(tag);
+    };
+
+    const handleBack = () => {
+        navigation.navigate('CategoryScreen');
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-           {isLoading && <LoadingOverlay />}
-                <FlatList
-                    data={products}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <View style={styles.productContainer}>
-                            <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
-                            <Text style={styles.productTitle}>{item.title}</Text>
-                            <Text style={styles.productPrice}>#{item.price.toFixed(2)}</Text>
-                        </View>
-                    )}
-                />
-            
+            {isLoading && <LoadingOverlay />}
+            {!isLoading && (
+                <>
+                   
+                        
+                    
+                    <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(18), textAlign:'center', bottom: hp('2.3%') }}> {categoryName} </Text>
+                    <View  style={{bottom: hp('6.7%')}}>
+                    <TouchableOpacity onPress={handleBack} >
+                            <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+                        </TouchableOpacity>
+                    </View>
+                        
+
+                    <View style={styles.tagsContainer}>
+                        {tags.map(tag => (
+                            <TouchableOpacity
+                                key={tag}
+                                style={[styles.tagButton, selectedTag === tag && styles.selectedTag]}
+                                onPress={() => filterProductsByTag(tag)}
+                            >
+                                <Text style={styles.tagText}>{tag}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <FlatList
+                        data={filteredProducts}
+                        keyExtractor={(item) => item.id}
+                        numColumns={2}
+                        key={2}
+                        renderItem={({ item }) => (
+                            <View style={styles.productContainer}>
+                                <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
+                                <Text style={styles.productTitle}>{item.title}</Text>
+                                <Text style={styles.productPrice}>#{item.price.toFixed(2)}</Text>
+                                <Ionicons name="location-outline" size={15} color="black" style={{ right: wp('13%'), bottom: hp('0.8%') }} />
+                                <Text style={styles.productDistance}>{item.distance} miles away</Text>
+                            </View>
+                        )}
+                    />
+                </>
+            )}
         </SafeAreaView>
     );
 };
@@ -70,30 +169,68 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#D3D3D3',
-        padding: 16,
+        padding: hp('2%'),
+        
+    },
+    tagsContainer: {
+        flexDirection:'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginVertical: hp('1%'),
+        paddingHorizontal: wp('1%'),
+        marginTop:hp('-4.5%'),
+        marginBottom:hp('2%')
+    },
+    tagButton: {
+        paddingVertical: hp('1%'),
+        paddingHorizontal: wp('4%'),
+        marginHorizontal: wp('2%'),
+        borderRadius: 10,
+        backgroundColor: '#ddd',
+        height: hp('5%'),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    selectedTag: {
+        backgroundColor: '#007BFF',
+    },
+    tagText: {
+        fontSize: RFValue(13),
+        color: '#000',
+        fontFamily: 'Poppins-Bold',
     },
     productContainer: {
-        padding: 16,
-        backgroundColor: '#fff',
-        marginVertical: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: hp('1.7%'),
+        backgroundColor: 'white',
         borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#ddd',
     },
     productImage: {
-        width: '100%',
-        height: 200,
-        resizeMode: 'cover',
-        borderRadius: 8,
+        width: wp('40%'),
+        height: hp('13%'),
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
+        marginBottom: hp('1%'),
     },
     productTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginVertical: 8,
+        color: 'black',
+        fontSize: RFValue(15),
+        textAlign: 'center',
+        fontFamily: 'OpenSans-Bold',
     },
     productPrice: {
-        fontSize: 16,
+        fontSize: RFValue(13),
         color: '#888',
+        fontFamily: 'Poppins-Regular',
+    },
+    productDistance: {
+        fontSize: RFValue(12),
+        color: '#666',
+        fontFamily: 'Poppins-Regular',
+        bottom: hp('3%'),
+        left: wp('2%'),
+        marginBottom: hp('-2.0%'),
     },
 });
 

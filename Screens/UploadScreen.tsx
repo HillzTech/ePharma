@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView, Modal, TouchableHighlight } from 'react-native';
 import { db } from '../Components/firebaseConfig';
-import { collection, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/authContext';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,75 +9,29 @@ import { AntDesign, Entypo, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import LoadingOverlay from '../Components/LoadingOverlay';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { getDownloadURL, ref } from 'firebase/storage';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { storage } from '../Components/firebaseConfig'; // Make sure you import storage from your Firebase config
-
-import { useData } from '../contexts/DataContext'; // Import DataContext
+import GetLocation from 'react-native-get-location';
 import SuccessfulUpload from './SuccessfulUpload';
+import { useCategories } from '../contexts/CategoriesContext';
 
 
 const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
     const { user } = useAuth();
+    const { categories, loading } = useCategories(); 
     const [category, setCategory] = useState<string>('');
-    
     const [title, setTitle] = useState<string>('');
     const [prescription, setPrescription] = useState<string>('');
-    const [location, setLocation] = useState<string>('');
     const [pharmacyName, setPharmacyName] = useState<string>('');
     const [productPrice, setProductPrice] = useState<string>('');
     const [productImages, setProductImages] = useState<string[]>([]);
-    const [categories, setCategories] = useState<{ name: string; imageUrl: string }[]>([]);
     const [isLoading, setLoading] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [selectedTags, setSelectedTags] = useState<string[]>([]); // Replace 'string[]' with the type of your tags
-
+    
 const tags = ["OTC", "GSL", "Near Expiry"];
 
-
-    useEffect(() => {
-      const fetchCategories = async () => {
-        try {
-            console.log('Fetching categories from Firestore...');
-            
-            const categoriesCollection = collection(db, 'categories');
-            const categorySnapshot = await getDocs(categoriesCollection);
-            
-            if (categorySnapshot.empty) {
-                console.log('No categories found.');
-                return;
-            }
-            
-            const categoryList = await Promise.all(
-                categorySnapshot.docs.map(async (doc) => {
-                    const data = doc.data();
-                    
-    
-                    // Convert gs:// URL to a public URL
-                    let imageUrl = data.imageUrl;
-                    if (imageUrl && imageUrl.startsWith('gs://')) {
-                        const storageRef = ref(storage, imageUrl);
-                        try {
-                            imageUrl = await getDownloadURL(storageRef);
-                        } catch (error) {
-                            
-                            imageUrl = ''; // Handle error case
-                        }
-                    }
-    
-                  
-                    return { ...data, imageUrl } as { name: string; imageUrl: string };
-                })
-            );
-    
-        
-            setCategories(categoryList);
-        } catch (error) {
-            console.error('Error fetching categories: ', error);
-            Alert.alert('Error', 'Failed to fetch categories.');
-        }
-    };
-      fetchCategories();
-  }, []);
+   
   
   
     const handleImagePicker = async () => {
@@ -98,67 +52,90 @@ const tags = ["OTC", "GSL", "Near Expiry"];
         }
     };
 
+    const handleUpload = async () => {
+      if (!user) {
+          Alert.alert('Error', 'You must be logged in to upload products.');
+          return;
+      }
+  
+      if (!category || !title || !prescription || !pharmacyName || !productPrice || productImages.length === 0) {
+          Alert.alert('Error', 'Please fill in all fields and select at least one image.');
+          return;
+      }
+  
+      setLoading(true);
+      try {
+          // Get seller's current location
+          const sellerLocation = await GetLocation.getCurrentPosition({
+              enableHighAccuracy: true,
+              timeout: 15000,
+          });
+  
+          const { latitude, longitude } = sellerLocation;
+          console.log(`Seller Location - Latitude: ${latitude}, Longitude: ${longitude}`);
+  
+          // Check if the category exists
+          const categoryRef = doc(db, `categories/${category}`);
+          const categoryDoc = await getDoc(categoryRef);
+  
+          if (!categoryDoc.exists()) {
+              Alert.alert('Error', 'Selected category does not exist.');
+              setLoading(false);
+              return;
+          }
+  
+          // Generate a unique product ID
+          const productId = doc(collection(db, `categories/${category}/products`)).id;
+  
+          // Upload images to Firebase Storage
+          const imageUrls = await Promise.all(productImages.map(async (uri) => {
+              const response = await fetch(uri);
+              const blob = await response.blob();
+              const filename = uri.substring(uri.lastIndexOf('/') + 1);
+              const storageRef = ref(storage, `product_images/${filename}`);
+              await uploadBytes(storageRef, blob);
+              const url = await getDownloadURL(storageRef);
+              return url;
+          }));
+  
+          // Prepare product data with image URLs
+          const productData = {
+              userId: user.uid,  // Store user ID
+              title,
+              prescription,
+              location: { latitude, longitude },
+              pharmacyName,
+              price: parseFloat(productPrice),
+              imageUrls: imageUrls,
+              tags: selectedTags,
+              category, // Include the category field
+          };
+  
+          // Add product to category using the generated ID
+          const productsInCategoryRef = doc(db, `categories/${category}/products/${productId}`);
+          await setDoc(productsInCategoryRef, productData);
+  
+          // Add product to user's products collection using the same ID
+          const userProductsRef = doc(db, `users/${user.uid}/products/${productId}`);
+          await setDoc(userProductsRef, productData);
+  
+          navigation.navigate(SuccessfulUpload);
+          setCategory('');
+          setTitle('');
+          setPrescription('');
+          setPharmacyName('');
+          setProductPrice('');
+          setProductImages([]);
+      } catch (error) {
+          console.error('Error uploading product: ', error);
+          Alert.alert('Error', `Failed to upload product.`);
+      } finally {
+          setLoading(false); // Ensure loading state is reset on completion
+      }
+  };
   
 
-   const handleUpload = async () => {
-  if (!user) {
-    Alert.alert('Error', 'You must be logged in to upload products.');
-    return;
-  }
-
-  if (!category || !title || !prescription || !location || !pharmacyName || !productPrice || productImages.length === 0) {
-    Alert.alert('Error', 'Please fill in all fields and select at least one image.');
-    return;
-  }
-  
-  setLoading(true);
-  try {
-    // Check if the category exists
-    const categoryRef = doc(db, `categories/${category}`);
-    const categoryDoc = await getDoc(categoryRef);
-
-    if (!categoryDoc.exists()) {
-      Alert.alert('Error', 'Selected category does not exist.');
-      setLoading(false);
-      return;
-    }
-
-    // Upload the product to the existing category
-    const productsInCategoryRef = collection(db, `categories/${category}/products`);
-    const productData = {
-      userId: user.uid,  // Store user ID
-      title,
-      prescription,
-      location,
-      pharmacyName,
-      price: parseFloat(productPrice),
-      imageUrls: productImages,
-      tags: selectedTags,
-    };
-    
-    // Add product to category
-    await addDoc(productsInCategoryRef, productData);
-
-    // Add product to user's products collection
-    const userProductsRef = collection(db, `users/${user.uid}/products`);
-    await addDoc(userProductsRef, productData);
-
-    navigation.navigate(SuccessfulUpload);
-    setCategory('');
-    setTitle('');
-    setPrescription('');
-    setLocation('');
-    setPharmacyName('');
-    setProductPrice('');
-    setProductImages([]);
-  } catch (error) {
-    console.error('Error uploading product: ', error);
-    Alert.alert('Error', `Failed to upload product. `);
-  } finally {
-    setLoading(false); // Ensure loading state is reset on completion
-  }
-};
-
+   
 
   const goBack = async () => {
   
@@ -197,13 +174,7 @@ const tags = ["OTC", "GSL", "Near Expiry"];
                 onChangeText={setTitle}
             />
             
-            <TextInput
-                style={styles.input}
-                placeholder="Location*"
-                placeholderTextColor="black"
-                value={location}
-                onChangeText={setLocation}
-            />
+      
             <TextInput
                 style={styles.input}
                 placeholder="Pharmacy Name*"
@@ -256,7 +227,7 @@ const tags = ["OTC", "GSL", "Near Expiry"];
             <View>
           <Text style={styles.imagePickerText}>Add at least 1 photo</Text>
           <TouchableOpacity onPress={handleImagePicker} style={styles.imagePicker}>
-          <FontAwesome name="plus" size={12} color="white" />
+          <FontAwesome name="plus" size={14} color="white" style={{top:hp('1.7%')}}/>
             </TouchableOpacity>
 
             <ScrollView horizontal>
@@ -271,49 +242,44 @@ const tags = ["OTC", "GSL", "Near Expiry"];
 
             
             <TouchableOpacity onPress={handleUpload} style={{bottom:hp('1%')}} >
-            <Text style={{textAlign:'center',top:hp('3%'),backgroundColor:'blue', width:wp('70%'), padding:wp('3.5%'), borderRadius:6, color:'white', fontFamily:'Poppins-Bold', left:wp('11%')}}>UPLOAD PRODUCT</Text>
+            <Text style={{textAlign:'center',top:hp('3%'),backgroundColor:'blue', width:wp('80%'), padding:wp('3.5%'), borderRadius:6, color:'white', fontFamily:'Poppins-Bold', left:wp('5.7%')}}>UPLOAD PRODUCT</Text>
             
             </TouchableOpacity>
 
             {/* Category Modal */}
             <Modal
-                animationType="slide"
-                transparent={true}
-                visible={showModal}
-                onRequestClose={() => setShowModal(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalHeader}>Select Category</Text>
-                        {categories.map((cat) => (
-                            <TouchableOpacity
-                                key={cat.name}
-                                style={styles.categoryOption}
-                                onPress={() => {
-                                    setCategory(cat.name);
-                                    setShowModal(false);
-                                }}
-                            >
-                              <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'center'}}>
-                              <Image source={{ uri: cat.imageUrl }} style={styles.categoryImage} />
-                              <Text style={{fontFamily:'Poppins-Bold', fontSize:RFValue(15), left:wp('7%')}}>{cat.name}</Text>
-                              </View>
-                               
-                                <AntDesign name="right" size={RFValue(16)}color="black" style={{left:wp('2%')}}/>
-                            </TouchableOpacity>
-                        ))}
-
-
-
-                        <TouchableHighlight
-                            style={styles.closeButton}
-                            onPress={() => setShowModal(false)}
-                        >
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableHighlight>
-                    </View>
+        animationType="slide"
+        transparent={true}
+        visible={showModal}
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>Select Category</Text>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat.name}
+                style={styles.categoryOption}
+                onPress={() => {
+                  setCategory(cat.name);
+                  setShowModal(false);
+                }}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
+                  <Image source={{ uri: cat.imageUrl }} style={styles.categoryImage} />
+                  <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(15), left: wp('7%') }}>
+                    {cat.name}
+                  </Text>
                 </View>
-            </Modal>
+                <AntDesign name="right" size={RFValue(16)} color="black" style={{ left: wp('2%') }} />
+              </TouchableOpacity>
+            ))}
+            <TouchableHighlight style={styles.closeButton} onPress={() => setShowModal(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableHighlight>
+          </View>
+        </View>
+      </Modal>
         </SafeAreaView>
     );
 };
@@ -344,7 +310,7 @@ const styles = StyleSheet.create({
     },
     imagePicker: {
         marginBottom: hp('2%'),
-        paddingVertical: hp('5%'),
+        paddingVertical: hp('3%'),
         width:wp('24%'),
         height:wp('24%'),
         backgroundColor: '#272727',

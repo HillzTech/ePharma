@@ -101,14 +101,23 @@ const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
           
 
           <View style={styles.pickerContainer}>
-            
+          <Picker
+              selectedValue={selectedMonth}
+              style={styles.picker}
+              onValueChange={(itemValue: string | null) => setSelectedMonth(itemValue)}
+            >
+              <Picker.Item label="Month" value={null} />
+              {fullMonthNames.map((month, index) => (
+                <Picker.Item key={index} label={month} value={month} />
+              ))}
+            </Picker>
 
             <Picker
               selectedValue={selectedYear}
               style={styles.picker}
               onValueChange={(itemValue: string | null) => setSelectedYear(itemValue)}
             >
-              <Picker.Item label="Select Year" value={null} />
+              <Picker.Item label="Year" value={null} />
               {years.map((year, index) => (
                 <Picker.Item key={index} label={year} value={year} />
               ))}
@@ -162,14 +171,15 @@ const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
 const styles = StyleSheet.create({
   pickerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    paddingHorizontal:wp('9%'),
     bottom:hp('0.4%')
     
   
   },
   picker: {
-    height: 50,
-    width: wp('44.3%'),
+    height: hp('3%'),
+    width: wp('29%'),
   },
  
   chartContainer: {
