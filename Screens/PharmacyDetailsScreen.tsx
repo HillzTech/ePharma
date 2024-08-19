@@ -16,11 +16,15 @@ interface Product {
   price: number;
   imageUrls: string[];
   tags: string[];
+  userId: string; // Add this line
+  pharmacyName: string; 
+  percentageDiscount: string
 }
 
 interface PharmacyDetails {
   pharmacyImage: string;
   pharmacyName: string;
+  userId: string; 
   location: {
     address: string;
     latitude: number;  
@@ -55,23 +59,25 @@ const PharmacyDetailsScreen: React.FC = () => {
           const data = pharmacyDoc.data() as PharmacyDetails;
           const address = await fetchAddress(data.location.latitude, data.location.longitude);
           setPharmacyDetails({ ...data, location: { address, latitude: data.location.latitude, longitude: data.location.longitude } });
-           setLoading(false);
-          const categoriesSnapshot = await firebase.firestore().collection('categories').get();
+          setLoading(false);
+  
+          // Fetch products directly from the pharmacy document
+          const productsSnapshot = await pharmacyDoc.ref.collection('products').get();
           const allProducts: Product[] = [];
           const allTags = new Set<string>();
-          setLoading(false);
           setLoadingProducts(true);
-          for (const categoryDoc of categoriesSnapshot.docs) {
-            const productsCollection = firebase.firestore().collection('categories').doc(categoryDoc.id).collection('products');
-            const productsSnapshot = await productsCollection.where('userId', '==', pharmacyId).get();
-    
-            productsSnapshot.forEach(doc => {
-              const productData = doc.data() as Omit<Product, 'id'>; // Exclude 'id' from productData
-              allProducts.push({ id: doc.id, ...productData }); // Add 'id' separately
-              productData.tags.forEach(tag => allTags.add(tag));
+  
+          productsSnapshot.forEach(doc => {
+            const productData = doc.data() as Omit<Product, 'id'>;
+            allProducts.push({ 
+              id: doc.id, 
+              ...productData, 
+              userId: data.userId, // Include userId in the product
+              pharmacyName: data.pharmacyName // Include pharmacyName in the product
             });
-          }
-    
+            productData.tags.forEach(tag => allTags.add(tag));
+          });
+  
           setProducts(allProducts);
           setTags(['All', ...Array.from(allTags)]);
           setFilteredProducts(allProducts);
@@ -82,10 +88,11 @@ const PharmacyDetailsScreen: React.FC = () => {
         setLoadingProducts(false);
       }
     };
-    
-
+  
     fetchPharmacyDetails();
   }, [pharmacyId]);
+  
+    
 
   useEffect(() => {
     filterProductsByTag(selectedTag);
@@ -103,7 +110,7 @@ const PharmacyDetailsScreen: React.FC = () => {
   };
 
   const handleProductPress = (product: Product) => {
-    (navigation as any).navigate('AddToCartScreen', { product});
+    (navigation as any).navigate('AddToCartScreen', { product, pharmacyId});
   };
 
   const handleBack = async () => {
@@ -125,6 +132,8 @@ const PharmacyDetailsScreen: React.FC = () => {
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.title}</Text>
         <Text style={styles.productPrice}>#{item.price.toFixed(2)}</Text>
+        
+        <Text style={{ fontFamily:'Poppins-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal:8, right: wp('11%')}}>{item.percentageDiscount}%</Text>
       </View>
     </TouchableOpacity>
   );

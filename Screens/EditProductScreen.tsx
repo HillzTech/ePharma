@@ -94,7 +94,17 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
                 imageUrls: images,
                 prescription,
             });
-    
+
+            // Update the product in the pharmacy's collection
+            const pharmacyDocRef = doc(db, `pharmacy/${user?.uid}/products/${productId}`);
+            await updateDoc(pharmacyDocRef, {
+                title,
+                price: parseFloat(price),
+                imageUrls: images,
+                prescription,
+            });
+
+            
             navigation.goBack();
         } catch (error) {
             console.error('Error updating product:', error);

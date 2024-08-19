@@ -5,5 +5,7 @@ export interface Product {
     price: number;
     imageUrls?: string[]; // Optional
     quantity?: number;
+    userId: string;
+    pharmacyName: string;
   }
   

@@ -82,7 +82,7 @@ const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
   return (
     <View>
       <View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal:wp('6%')}}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal:wp('5%')}}>
         <View style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop:hp('2%')}}>
           <Text style={{ color: 'blue', fontFamily:'OpenSans-Bold', fontSize:RFValue(15) }}>Revenue</Text>
           <View style={{bottom:hp('0.3')}}>
@@ -90,7 +90,7 @@ const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
         text={` #${totalRevenue.toFixed(2)}`}
         strokeColor="white"
         strokeWidth={3} 
-        fontSize={RFValue(15)}
+        fontSize={RFValue(14)}
       
       />
 

@@ -64,7 +64,7 @@ const RetailFooter: React.FC<{ route: any, navigation: any }> = ({ route, naviga
             <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(10), color: 'grey' }}>Home</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => handleIconPress('order', ' RetailOrder')}>
+          <TouchableOpacity onPress={() => handleIconPress('order', 'RetailerOrderScreen')}>
           <MaterialIcons name="category" size={iconSize} color={selectedIcon === 'order' ? 'blue' : 'white'} opacity={0.8}/>
             <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(10), color: 'grey' }}>Order</Text>
           </TouchableOpacity>

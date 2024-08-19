@@ -29,6 +29,8 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
     const [selectedTag, setSelectedTag] = useState<string>('All');
     const [showOptions, setShowOptions] = useState<string | null>(null);
 
+
+
     useEffect(() => {
         const fetchProducts = async () => {
             if (!user) {
@@ -131,6 +133,14 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
             const categoryProductRef = doc(db, `categories/${category}/products/${productId}`);
             await deleteDoc(categoryProductRef);
             console.log(`Deleted product ${productId} from category ${category}`);
+
+            // Delete the product from the pharmacy's collection
+            
+            const pharmacyProductsRef = doc(db, `pharmacy/${user?.uid}/products/${productId}`);
+            await deleteDoc(pharmacyProductsRef);
+            console.log(`Deleted product ${productId} from pharmacy collection`);
+
+            
     
             // Remove the product from local state
             setProducts(products.filter(product => product.id !== productId));
@@ -248,10 +258,10 @@ const styles = StyleSheet.create({
     },
     tagsContainer: {
         marginVertical: hp('2%'),
-        paddingHorizontal: wp('3%'),
+        paddingHorizontal: wp('1%'),
         flexDirection:'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-around',
     },
     tagButton: {
         paddingVertical: hp('1%'),

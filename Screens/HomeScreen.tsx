@@ -467,7 +467,7 @@ const handlePress = (pharmacyId: string) => {
         
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: wp('3%') }}>
-        <TouchableOpacity onPress={() => handleIconPress('user','OrderScreen')}>
+        <TouchableOpacity onPress={() => handleIconPress('user','CustomerOrderScreen')}>
   <Entypo name='shopping-cart' size={smallSize} color={selectedIcon === 'user' ? 'blue' : 'white'} style={{ left: wp('1.5%') }} />
   <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey', left: wp('1.5%') }}>Order</Text>
 </TouchableOpacity>
@@ -567,6 +567,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: wp('5%'),
     paddingBottom: hp('10%'),
+    
   },
   pharmacyContainer: {
     flexDirection: 'column',

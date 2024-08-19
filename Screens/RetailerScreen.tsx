@@ -40,6 +40,10 @@ const RetailerScreen: React.FC<{ route: any, navigation: any }> = ({ route, navi
   const [showClose, setShowClose] = useState<boolean>(false);
   const [selectedIcon, setSelectedIcon] = useState<string>('home'); // Default selected icon
   const [isLoading, setLoading] = useState(false);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0); // State for total products
+  const [pharmacyName, setPharmacyName] = useState<string>('');
+
 
 
   
@@ -47,10 +51,24 @@ const RetailerScreen: React.FC<{ route: any, navigation: any }> = ({ route, navi
   useEffect(() => {
     const currentUser = firebase.auth().currentUser;
     if (currentUser) {
-
+      fetchPharmacyName(currentUser.uid);
       fetchAvatar(currentUser.uid);
     }
   }, []);
+  const fetchPharmacyName = async (userId: string) => {
+    try {
+      const docRef = firebase.firestore().collection('pharmacy').doc(userId);
+      const doc = await docRef.get();
+      if (doc.exists) {
+        setPharmacyName(doc.data()?.pharmacyName || 'Pharmacy not found');
+      } else {
+        setPharmacyName('Pharmacy not found');
+      }
+    } catch (error) {
+      console.error('Error fetching pharmacy name:', error);
+      setPharmacyName('Error fetching pharmacy name');
+    }
+  };
 
   const fetchAvatar = async (userId: string) => {
     try {
@@ -179,9 +197,81 @@ const handleback = async() => {
 
 const handleLogOut = async ()=>{
   await logout();
-  navigation.navigate('GetStarted');
+  navigation.navigate('LoginScreen');
 }
 
+const [pendingCount, setPendingCount] = useState(0);
+  const [deliveredCount, setDeliveredCount] = useState(0);
+  const [cancelledCount, setCancelledCount] = useState(0);
+
+  useEffect(() => {
+    const fetchOrderCounts = async () => {
+      try {
+        const userId = firebase.auth().currentUser?.uid;
+        if (userId) {
+          const ordersSnapshot = await firebase.firestore()
+            .collection('orders')
+            .get(); // Fetch all orders
+  
+          let pending = 0;
+          let delivered = 0;
+          let cancelled = 0;
+          let total = ordersSnapshot.size; // Total number of orders
+  
+          ordersSnapshot.docs.forEach(doc => {
+            const order = doc.data();
+            if (order.items.some((item: { sellerId: string; }) => item.sellerId === userId)) {
+              if (order.status === 'Pending') pending++;
+              if (order.status === 'Delivered') delivered++;
+              if (order.status === 'Cancelled') cancelled++;
+            }
+          });
+  
+          setPendingCount(pending);
+          setDeliveredCount(delivered);
+          setCancelledCount(cancelled);
+          setTotalOrders(total);
+        }
+      } catch (error) {
+        console.error('Error fetching order counts:', error);
+      }
+    };
+  
+    fetchOrderCounts();
+  }, []);
+
+  const calculatePercentage = (count: number) => {
+    if (totalOrders === 0) return 0;
+    return ((count / totalOrders) * 100).toFixed(2);
+  };
+  
+  useEffect(() => {
+    const fetchTotalProducts = async () => {
+      try {
+        setLoading(true);
+        const userId = firebase.auth().currentUser?.uid;
+        console.log('UserID:', userId); // Debug: check user ID
+        if (userId) {
+          const productsSnapshot = await firebase.firestore()
+            .collection('users')
+            .doc(userId)
+            .collection('products')
+            .get();
+          
+          console.log('Products Snapshot Size:', productsSnapshot.size); // Debug: check snapshot size
+          const count = productsSnapshot.size;
+          setTotalProducts(count); // Set the total number of products
+        }
+      } catch (error) {
+        console.error('Error fetching total products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchTotalProducts();
+  }, []);
+  
 
 /* const updateRevenue = async (userId: string, month: string, amount: number) => {
   try {
@@ -217,7 +307,7 @@ const handleSale = async (userId: string, amount: number) => {
     <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
     </TouchableOpacity>
     {user && (
-   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('45%'), bottom:hp('0.4%')}}>{user.username}</Text>
+   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('30%'), bottom:hp('0.4%')}}> { pharmacyName || user?.username }</Text>
   )}
    </View>
 
@@ -228,10 +318,7 @@ const handleSale = async (userId: string, amount: number) => {
     <Ionicons name='search' size={iconSize} style={{opacity:0.7}}/>
     </TouchableOpacity>
 
-    <TouchableOpacity>
-    <Ionicons name='close' size={iconSize} style={{opacity:0.7}}/>
-    </TouchableOpacity>
-  
+    
   
   </View>
  
@@ -264,8 +351,8 @@ const handleSale = async (userId: string, amount: number) => {
    </View>
 
    <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('6%')}}>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>0</Text>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>0%</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>{cancelledCount}</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>{calculatePercentage(cancelledCount)}%</Text>
     
    </View>
     
@@ -281,8 +368,8 @@ const handleSale = async (userId: string, amount: number) => {
    </View>
 
    <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('6%')}}>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>0</Text>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>0%</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>{pendingCount}</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>{calculatePercentage(pendingCount)}%</Text>
     
    </View>
     
@@ -297,8 +384,8 @@ const handleSale = async (userId: string, amount: number) => {
    </View>
 
    <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('6%')}}>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>0</Text>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>0%</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>{deliveredCount}</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>{calculatePercentage(deliveredCount)}%</Text>
     
    </View>
     
@@ -313,7 +400,7 @@ const handleSale = async (userId: string, amount: number) => {
    </View>
 
    <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('6%'), bottom:hp('0.45')}}>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>0</Text>
+    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>{totalProducts}</Text>
     <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>0%</Text>
     
    </View>

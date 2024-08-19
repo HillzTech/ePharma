@@ -34,6 +34,12 @@ import PharmacyDetailsScreen from './Screens/PharmacyDetailsScreen';
 import AddToCartScreen from './Screens/AddToCartScreen';
 import { ProductProvider } from './contexts/ProductContext';
 import CartScreen from './Screens/CartScreen';
+import Paystack from 'paystack-react-native';
+import PaymentScreen from './Screens/PaymentScreen';
+import PurchaseSuccessful from './Screens/PurchaseSuccessful';
+import CustomerOrderScreen from './Screens/CustomerOrderScreen';
+import RetailerOrderScreen from './Screens/RetailerOrderScreen';
+
 
 
 
@@ -122,6 +128,10 @@ export default function App() {
               <Stack.Screen name="PharmacyInfo" component={PharmacyInfo} />
               <Stack.Screen name="AddToCartScreen" component={AddToCartScreen} />
               <Stack.Screen name="CartScreen" component={CartScreen} />
+              <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+              <Stack.Screen name="PurchaseSuccessful" component={PurchaseSuccessful} />
+              <Stack.Screen name="CustomerOrderScreen" component={CustomerOrderScreen} />
+              <Stack.Screen name="RetailerOrderScreen" component={RetailerOrderScreen} />
               <Stack.Screen name="PharmacyDetailsScreen" component={PharmacyDetailsScreen} options={{ title: 'Pharmacy Details' }}/>
             </Stack.Navigator>
           </NavigationContainer>

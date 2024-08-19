@@ -13,6 +13,8 @@ interface Product {
   price: number;
   imageUrls: string[];
   prescription: string;
+  userId: string; // Added this line
+  pharmacyName: string; // Added this line
 }
 
 const { width } = Dimensions.get('window');
@@ -32,7 +34,7 @@ const AddToCartScreen: React.FC = () => {
   const handleAddToCart = () => {
     const quantityToAdd = quantity || 1; // Default to 1 if quantity is undefined
     addToCart({ ...product, quantity: quantityToAdd });
-    navigation.navigate('CartScreen');
+    (navigation as any).navigate('CartScreen');
   };
   
 
@@ -84,6 +86,7 @@ const AddToCartScreen: React.FC = () => {
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
+        
         <Text style={{ color: 'black', fontFamily: 'OpenSans-Bold', fontSize: RFValue(13), top: hp('0.4%'), marginTop: hp('2%') }}>Information</Text>
         <Text style={styles.prescriptionText}>
           {product.prescription ? product.prescription : 'No Prescription Required'}

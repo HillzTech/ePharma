@@ -192,7 +192,7 @@ const handleback = async() => {
 
 const handleLogOut = async ()=>{
     await logout();
-    navigation.navigate('GetStarted');
+    navigation.navigate('LoginScreen');
   }
   
 
