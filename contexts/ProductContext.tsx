@@ -1,67 +1,90 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';
+import React, { createContext, useEffect, useState, useContext, ReactNode } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../Components/firebaseConfig';
+import { useAuth } from '../contexts/authContext';
 
+// Define the type for Product
 interface Product {
   id: string;
-  title: string;
+  name: string;
   price: number;
-  imageUrls: string[];
-  tags: string[];
+  description: string;
+  imageUrl: string;
+  pharmacyId: string;
 }
 
+// Define the type for the context value
 interface ProductContextType {
   products: Product[];
-  isLoading: boolean;
-  fetchProducts: (pharmacyId: string) => Promise<void>;
+  loading: boolean;
+  fetchProducts: () => Promise<void>;
 }
 
+// Define the type for the provider props
+interface ProductProviderProps {
+  children: ReactNode;
+}
+
+// Create the context
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Create the provider component
+export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setLoading] = useState<boolean>(true); // Set initial loading to true
+  const [loading, setLoading] = useState<boolean>(true);
+  const { user } = useAuth(); // Access the authenticated user from Auth context
 
-  const fetchProducts = async (pharmacyId: string) => {
-    setLoading(true); // Set loading to true when fetching starts
+  useEffect(() => {
+    if (user) {
+      fetchProducts(); // Fetch products once the user is authenticated
+    }
+  }, [user]);
+
+  // Function to fetch products from all pharmacies in Firestore
+  const fetchProducts = async () => {
+    setLoading(true);
     try {
-      const categoriesSnapshot = await firebase.firestore().collection('categories').get();
-      const allProducts: Product[] = [];
+      // Get a reference to the 'pharmacy' collection
+      const pharmacyRef = collection(db, 'pharmacy');
+      const querySnapshot = await getDocs(pharmacyRef);
 
-      for (const categoryDoc of categoriesSnapshot.docs) {
-        const productsCollection = firebase.firestore().collection('categories').doc(categoryDoc.id).collection('products');
-        const productsSnapshot = await productsCollection.where('userId', '==', pharmacyId).get();
+      const productList: Product[] = [];
 
-        productsSnapshot.forEach(doc => {
-          const productData = doc.data() as Product;
-          allProducts.push(productData);
+      // Loop through each pharmacy to get products
+      for (const pharmacyDoc of querySnapshot.docs) {
+        const productsRef = collection(db, 'pharmacy', pharmacyDoc.id, 'products');
+        const productsSnapshot = await getDocs(productsRef);
+
+        // Add products to the list
+        productsSnapshot.forEach(productDoc => {
+          productList.push({
+            id: productDoc.id,
+            ...productDoc.data(),
+            pharmacyId: pharmacyDoc.id, // Store the pharmacyId with each product
+          } as Product);
         });
       }
 
-      setProducts(allProducts);
+      setProducts(productList); // Set the combined product list
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error fetching products: ', error);
     } finally {
-      setLoading(false); // Set loading to false after fetching
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    // You might want to replace 'defaultPharmacyId' with actual logic to get the pharmacy ID
-    fetchProducts('PharmacyId');
-  }, []);
-
   return (
-    <ProductContext.Provider value={{ products, isLoading, fetchProducts }}>
+    <ProductContext.Provider value={{ products, loading, fetchProducts }}>
       {children}
     </ProductContext.Provider>
   );
 };
 
-export const useProductContext = () => {
+// Custom hook to use the ProductContext
+export const useProducts = () => {
   const context = useContext(ProductContext);
   if (!context) {
-    throw new Error('useProductContext must be used within a ProductProvider');
+    throw new Error('useProducts must be used within a ProductProvider');
   }
   return context;
 };

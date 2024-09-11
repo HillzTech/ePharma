@@ -15,6 +15,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/authContext';
 import LoadingOverlay from '../Components/LoadingOverlay';
 import { useAvatar } from '../contexts/AvatarContext';
+import { usePharmacy } from '../contexts/PharmacyContext';
+import RetailFooter from '../Components/RetailFooter';
+import PharmacyBulkScreen from './PharmacyBulkScreen';
 
 interface Product {
   id: string;
@@ -37,14 +40,14 @@ const RetailerProfile: React.FC<{ route: any, navigation: any }> = ({ route, nav
   const [selectedIcon, setSelectedIcon] = useState<string>('home'); // Default selected icon
   const [isLoading, setLoading] = useState(false);
   const { avatar, setAvatar } = useAvatar();
-
+  const { pharmacyName, fetchPharmacyName } = usePharmacy();
 
   
   
   useEffect(() => {
     const currentUser = firebase.auth().currentUser;
     if (currentUser) {
-
+      fetchPharmacyName(currentUser.uid);
       fetchAvatar(currentUser.uid);
     }
   }, []);
@@ -103,6 +106,11 @@ const RetailerProfile: React.FC<{ route: any, navigation: any }> = ({ route, nav
   const handleIconPress = (iconName: string, screenName: string) => {
     setSelectedIcon(iconName);
     navigation.navigate(screenName);
+  };
+
+  const handleBulkProducts = () => {
+    
+    navigation.navigate(PharmacyBulkScreen);
   };
   
   
@@ -177,12 +185,20 @@ const handleback = async() => {
 
 const handleLogOut = async ()=>{
     await logout();
-    navigation.navigate('GetStarted');
+    navigation.navigate('LoginScreen');
   }
   const handleInfo = async ()=>{
     navigation.navigate('PharmacyInfo');
   }
-  
+  const handleWithdrawal = async ()=>{
+    navigation.navigate('WithdrawalScreen');
+  }
+  const handleComplaints = async ()=>{
+    navigation.navigate('SupportScreen');
+  }
+  const handleSettings = async ()=>{
+    navigation.navigate('ProfileSettingsScreen');
+  }
 
 
   return (
@@ -193,12 +209,12 @@ const handleLogOut = async ()=>{
     <Ionicons name="chevron-back" size={29} color="black" />
     </TouchableOpacity>
    
-   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('25%')}}>My profile</Text>
+   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('38%')}}>My profile</Text>
    </View>
 
 
-      <View style={{marginTop:hp('1%'), flexDirection:'row', alignItems:'center', justifyContent:'space-between',paddingHorizontal:wp('6%')}}>
-      <TouchableOpacity onPress={handleAvatarChange}  style={{left:wp('1%'), top:hp('1%')}}>
+      <View style={{marginTop:hp('1%'), flexDirection:'row', alignItems:'center', justifyContent:'flex-start',paddingHorizontal:wp('6%')}}>
+         <TouchableOpacity onPress={handleAvatarChange}  style={{left:wp('1%'), top:hp('1%')}}>
             <Image
               source={avatar ? { uri: avatar } : require('../assets/avatar.png')}
               style={styles.avatar}
@@ -209,9 +225,9 @@ const handleLogOut = async ()=>{
           </TouchableOpacity>
          
           {user && (
-        <View style={{paddingHorizontal:wp('6%'), right: wp('15%')}}>
-          <Text style={styles.username}>{user.username}</Text>
-          <Text style={{fontFamily:'Poppins-Regular', bottom:hp('1%'), fontSize:RFValue(9)}}>{user.email}
+        <View style={{paddingHorizontal:wp('6%'), flexDirection:'column',justifyContent:'center'}}>
+          <Text style={styles.username}> {pharmacyName || user?.username}</Text>
+          <Text style={{fontFamily:'Poppins-Regular', bottom:hp('1%'), fontSize:RFValue(9), left: wp('2%')}}>{user.email}
           </Text>
           
         </View>
@@ -224,7 +240,7 @@ const handleLogOut = async ()=>{
       <View style={{flexDirection:'column', margin:hp('1%'), gap: hp('1%')}}>
      
         
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}} onPress={handleInfo}>
+        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',  borderRadius:10,  marginBottom:hp('0.5%')}} onPress={handleInfo}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Pharamacy Details</Text>
@@ -239,22 +255,9 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('4%'), backgroundColor:'#FAF9F6'}}>
-          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
-          <View>
-          <Text style={styles.content}>Appointments</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Chat with your customers </Text>
-          </View>
+       
 
-
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
-          </View>
-          
-        
-        </TouchableOpacity>
-
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}}>
+        <TouchableOpacity onPress={handleBulkProducts}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Source for Drugs</Text>
@@ -269,10 +272,10 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}}>
+        <TouchableOpacity onPress={handleWithdrawal}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
-          <Text style={styles.content}>Payment methods</Text>
+          <Text style={styles.content}>Withdraw Funds</Text>
           <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Visa **34</Text>
           </View>
 
@@ -284,7 +287,7 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}}>
+        <TouchableOpacity onPress={handleComplaints}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Customer Support</Text>
@@ -299,22 +302,9 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}}>
-          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
-          <View>
-          <Text style={styles.content}>Delivery addresses</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>3 addresses</Text>
-          </View>
-
-
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
-          </View>
-          
         
-        </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}}>
+        <TouchableOpacity onPress={handleSettings} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Settings</Text>
@@ -329,7 +319,7 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6'}} onPress={handleLogOut}>
+        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}} onPress={handleLogOut}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Logout</Text>
@@ -348,7 +338,12 @@ const handleLogOut = async ()=>{
         
       </View>
 
-     
+      <View style={{bottom:hp('52.5%')}}>
+            <RetailFooter route={route} navigation={navigation} />
+            </View>
+            <View style={{top:hp('16%'), backgroundColor:'black', height:hp('10%')}}>
+            <></>
+            </View>
       
 
     </SafeAreaView>
@@ -358,10 +353,10 @@ const handleLogOut = async ()=>{
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
+    backgroundColor: '#D3D3D3',
   },
   username: {
-    fontSize: RFValue(19),
+    fontSize: RFValue(18),
     fontFamily: 'Poppins-Bold',
     
   },

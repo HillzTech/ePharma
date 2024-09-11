@@ -95,7 +95,7 @@ const handleLogin = async () => {
         } else if (role === 'Retailer') {
           navigation.navigate('RetailerScreen')
           } else if (role === 'Wholesaler') {
-            navigation.navigate(' WholeSalerScreen');
+            navigation.navigate('AdminDashboard');
         } else {
           Alert.alert('Error', 'Unknown user role');
         }
@@ -186,7 +186,7 @@ const handleGoogleSignIn = async () => {
 
 <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
             <Ionicons
-              name={isPasswordVisible ? "eye-off" : "eye"}
+              name={isPasswordVisible ? "eye" : "eye-off"}
               size={RFValue(28)}
               color="#777"
             />

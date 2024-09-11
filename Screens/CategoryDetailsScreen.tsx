@@ -15,6 +15,8 @@ interface Product {
     id: string;
     title: string;
     price: number;
+    costPrice: number;
+    percentageDiscount: number;
     imageUrls: string[];
     tags: string[];
     location: { latitude: number; longitude: number };
@@ -64,6 +66,8 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                         id: doc.id,
                         title: data.title || '',
                         price: data.price || 0,
+                        costPrice: data.costPrice || 0,
+                        percentageDiscount: data.percentageDiscount || 0,
                         imageUrls: data.imageUrls || [],
                         tags: data.tags || [],
                         location: data.location || { latitude: 0, longitude: 0 },
@@ -153,7 +157,13 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                             <View style={styles.productContainer}>
                                 <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
                                 <Text style={styles.productTitle}>{item.title}</Text>
-                                <Text style={styles.productPrice}>#{item.price.toFixed(2)}</Text>
+                                <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
+                                <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:wp('8%'), gap:wp('1%'), bottom:hp('1%') }}>
+        <Text style={{ fontFamily:'OpenSans-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
+        <Text style={{ fontFamily:'OpenSans-Regular', fontSize:RFValue(10), textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
+
+        </View>
+        
                                 <Ionicons name="location-outline" size={15} color="black" style={{ right: wp('13%'), bottom: hp('0.8%') }} />
                                 <Text style={styles.productDistance}>{item.distance} miles away</Text>
                             </View>
@@ -177,14 +187,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginVertical: hp('1%'),
-        paddingHorizontal: wp('1%'),
+        paddingHorizontal: wp('3%'),
         marginTop:hp('-4.5%'),
         marginBottom:hp('2%')
     },
     tagButton: {
-        paddingVertical: hp('1%'),
+        paddingVertical: hp('0.5%'),
         paddingHorizontal: wp('4%'),
-        marginHorizontal: wp('2%'),
+        marginHorizontal: wp('0.4%'),
         borderRadius: 10,
         backgroundColor: '#ddd',
         height: hp('5%'),
@@ -221,8 +231,8 @@ const styles = StyleSheet.create({
     },
     productPrice: {
         fontSize: RFValue(13),
-        color: '#888',
-        fontFamily: 'Poppins-Regular',
+        color: 'black',
+        fontFamily: 'Poppins-Bold',
     },
     productDistance: {
         fontSize: RFValue(12),

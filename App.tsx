@@ -39,6 +39,23 @@ import PaymentScreen from './Screens/PaymentScreen';
 import PurchaseSuccessful from './Screens/PurchaseSuccessful';
 import CustomerOrderScreen from './Screens/CustomerOrderScreen';
 import RetailerOrderScreen from './Screens/RetailerOrderScreen';
+import AppointmentScreen from './Screens/AppointmentScreen';
+import { PharmacyProvider } from './contexts/PharmacyContext';
+import PharmacyBulkScreen from './Screens/PharmacyBulkScreen';
+import AdminDashboard from './Screens/AdminDashboard';
+import AdminPayments from './Screens/AdminPayments';
+import AllOrder from './Screens/AllOrder';
+import AddPharmacist from './Screens/AddPharmacist';
+import ChatScreen from './Screens/ChatScreen';
+import NotificationScreen from './Screens/NotificationScreen';
+import WithdrawalScreen from './Screens/WithdrawalScreen';
+import PendingWithdrawalsScreen from './Screens/PendingWithdrawalsScreen';
+import CompletedWithdrawalsScreen from './Screens/CompletedWithdrawals';
+import SupportScreen from './Screens/SupportScreen';
+import AdminMessagingScreen from './Screens/AdminMessagingScreen';
+import ProfileSettingsScreen from './Screens/ProfileSettingsScreen';
+import ProductScreen from './Screens/ProductScreen';
+import SeeAll from './Screens/SeeALL';
 
 
 
@@ -99,6 +116,7 @@ export default function App() {
         <CategoriesProvider>
         <CartProvider>
         <ProductProvider>
+        <PharmacyProvider>
           <NavigationContainer>
             <Stack.Navigator
               initialRouteName="Intro"
@@ -132,9 +150,26 @@ export default function App() {
               <Stack.Screen name="PurchaseSuccessful" component={PurchaseSuccessful} />
               <Stack.Screen name="CustomerOrderScreen" component={CustomerOrderScreen} />
               <Stack.Screen name="RetailerOrderScreen" component={RetailerOrderScreen} />
+              <Stack.Screen name="AppointmentScreen" component={AppointmentScreen} />
+              <Stack.Screen name="PharmacyBulkScreen" component={PharmacyBulkScreen} />
+              <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+              <Stack.Screen name="AdminPayments" component={AdminPayments} />
+              <Stack.Screen name="AllOrder" component={AllOrder} />
+              <Stack.Screen name="AddPharmacist" component={AddPharmacist} />
+              <Stack.Screen name="ChatScreen" component={ChatScreen} />
+              <Stack.Screen name="WithdrawalScreen" component={WithdrawalScreen} />
+              <Stack.Screen name="PendingWithdrawalsScreen" component={PendingWithdrawalsScreen} />
+              <Stack.Screen name="CompletedWithdrawalsScreen" component={CompletedWithdrawalsScreen} />
+              <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+              <Stack.Screen name="SupportScreen" component={SupportScreen} />
+              <Stack.Screen name="AdminMessagingScreen" component={AdminMessagingScreen} />
+              <Stack.Screen name="ProfileSettingsScreen" component={ProfileSettingsScreen} />
+              <Stack.Screen name="ProductScreen" component={ProductScreen} />
+              <Stack.Screen name="SeeAll" component={SeeAll} />
               <Stack.Screen name="PharmacyDetailsScreen" component={PharmacyDetailsScreen} options={{ title: 'Pharmacy Details' }}/>
             </Stack.Navigator>
           </NavigationContainer>
+          </PharmacyProvider>
           </ProductProvider>
           </CartProvider>
           </CategoriesProvider>

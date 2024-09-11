@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, TextInput, PermissionsAndroid } from 'react-native';
 import { Paystack } from 'react-native-paystack-webview';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useCart } from '../contexts/CartContext';
@@ -7,8 +7,8 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { Ionicons } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import firebase from 'firebase/compat';
-import { doc, increment, updateDoc } from 'firebase/firestore';
 import { db } from '../Components/firebaseConfig';
+import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 
 const PaymentScreen: React.FC = () => {
   const route = useRoute();
@@ -22,18 +22,6 @@ const PaymentScreen: React.FC = () => {
 
   const paystackWebViewRef = useRef<any>(null);
   const referenceNumber = Math.random().toString(36).substring(2); // Generate a unique reference number
-
-  // Function to update the seller's revenue
-  const updateRevenue = async (userId: string, yearMonth: string, amount: number) => {
-    try {
-      const revenueDocRef = doc(db, `users/${userId}/revenue/${yearMonth}`);
-      await updateDoc(revenueDocRef, {
-        total: increment(amount),
-      });
-    } catch (error) {
-      console.error('Error updating revenue: ', error);
-    }
-  };
 
   const createOrderInFirestore = async () => {
     try {
@@ -57,51 +45,109 @@ const PaymentScreen: React.FC = () => {
         status: 'Pending', // Set initial status to 'Pending'
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
-  
+
       // Save the order in the global orders collection
       await firebase.firestore()
         .collection('orders')
         .doc(referenceNumber) // Use reference number as the document ID
         .set(orderDetails);
-  
-      // Update revenue for each seller
-      const date = new Date();
-      const currentMonth = date.toLocaleString('default', { month: 'long' });
-      const currentYear = date.getFullYear().toString();
-      const yearMonth = `${currentYear}-${currentMonth}`;
-  
-      for (const item of orderDetails.items) {
-        const itemTotalAmount = item.price * item.quantity;
-        await updateRevenue(item.sellerId, yearMonth, itemTotalAmount);
+
+      // Save the payment in the admin's payments collection
+      const adminUserId = "VdsO9TWkJlS9ItoohfAATFd0wPB3"; // Admin user ID
+      await firebase.firestore()
+        .collection('users')
+        .doc(adminUserId)
+        .collection('payments')
+        .doc(referenceNumber) // Use reference number as the document ID
+        .set({
+          ...orderDetails,
+          paymentReference: referenceNumber,
+          paymentDate: firebase.firestore.FieldValue.serverTimestamp(), // Add payment date
+        });
+
+      //Send push notification to the seller
+      const sellerToken = await getSellerToken(orderData.items[0].userId);
+      if (sellerToken) {
+        await sendPushNotification(sellerToken, 'New Order', `You have a new order for ${orderData.items.length} items.`);
       }
-  
-      console.log('Order successfully created in Firestore!');
+
+      // Send push notification to the admin
+      const adminToken = await getAdminToken(adminUserId);
+      if (adminToken) {
+        await sendPushNotification(adminToken, 'New Payment', `A payment of NGN ${totalAmount} has been made with reference ${referenceNumber}.`);
+      }
+
+      // Create a message for the user
+      const productNames = orderDetails.items.map((item: { productTitle: any; }) => item.productTitle).join(', ');
+      const messageDetails = {
+        message: `Your order for ${productNames} with reference number ${referenceNumber} is ${orderDetails.status}.`,
+        orderId: referenceNumber,
+        status: orderDetails.status,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        unread: true, // Mark the message as unread
+      };
+
+      // Save the message in the user's messages collection
+      await firebase.firestore()
+        .collection('users')
+        .doc(customerId)
+        .collection('messages')
+        .doc(referenceNumber) // Use reference number as the document ID
+        .set(messageDetails);
+
+      console.log('Order and message successfully created in Firestore!');
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('Error creating order and message:', error);
     }
   };
-  
 
-  const verifyPaymentOnServer = async (reference: string) => {
+  const getSellerToken = async (sellerId: string) => {
+    const sellerDoc = await firebase.firestore().collection('users').doc(sellerId).get();
+    return sellerDoc.exists ? sellerDoc.data()?.fcmToken : null;
+  };
+
+  const getAdminToken = async (adminId: string) => {
+    const adminDoc = await firebase.firestore().collection('users').doc(adminId).get();
+    return adminDoc.exists ? adminDoc.data()?.fcmToken : null;
+  };
+
+  const sendPushNotification = async (token: string, title: string, message: string) => {
     try {
-      const response = await fetch('https://backend.epharma.com.ng/verify-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const messagePayload: FirebaseMessagingTypes.RemoteMessage = {
+        to: token,
+        notification: {
+          title,
+          body: message,
+          icon: 'https://firebasestorage.googleapis.com/v0/b/epharma-97b49.appspot.com/o/20240711_181052_0000-removebg-preview.png?alt=media&token=844620c9-73c1-43b2-8838-148fd8637e11', 
         },
-        body: JSON.stringify({ reference }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Payment Verification Result:', result);
+        fcmOptions: {
+          analyticsLabel: 'notification', // Optional: Add an analytics label if needed
+        },
+      };
+  
+      await messaging().sendMessage(messagePayload);
+      console.log('Push notification sent successfully');
     } catch (error) {
-      console.error('Error verifying payment:', error);
+      console.error('Error sending push notification:', error);
     }
   };
+  
+  useEffect(() => {
+    const requestUserPermission = async () => {
+      PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+      if (enabled) {
+        console.log('Authorization status:', authStatus);
+        const token = await messaging().getToken();
+        console.log('FCM token', token);
+      }
+    };
+    requestUserPermission();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -118,13 +164,10 @@ const PaymentScreen: React.FC = () => {
         }}
         onSuccess={async (res: any) => {
           console.log('Payment successful:', res);
-        
+
           await createOrderInFirestore();
           clearCart();
           navigation.navigate('PurchaseSuccessful');
-          
-          // Send res.transactionRef (your referenceNumber) to your backend for verification
-          //verifyPaymentOnServer(res.transactionRef);
         }}
         ref={paystackWebViewRef}
       />
@@ -145,7 +188,7 @@ const PaymentScreen: React.FC = () => {
         />
         <TextInput
           style={styles.input}
-          placeholder="Enter your address"
+          placeholder="Enter delivery address"
           value={address}
           onChangeText={setAddress}
         />

@@ -186,18 +186,12 @@ const SignupScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
             <Text style={styles.roleButtonText}>Customer</Text>
             {selectedRole === 'Customer' && <Ionicons name="checkmark" size={RFValue(18)} color="black" />}
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.roleButton}
-            onPress={() => setSelectedRole(selectedRole === 'Wholesaler' ? '' : 'Wholesaler')}
-          >
-            <Text style={styles.roleButtonText}>Wholesaler</Text>
-            {selectedRole === 'Wholesaler' && <Ionicons name="checkmark" size={RFValue(18)} color="black" />}
-          </TouchableOpacity>
+          
           <TouchableOpacity
             style={styles.roleButton}
             onPress={() => setSelectedRole(selectedRole === 'Retailer' ? '' : 'Retailer')}
           >
-            <Text style={styles.roleButtonText}>Retailer</Text>
+            <Text style={styles.roleButtonText}>Pharmacy</Text>
             {selectedRole === 'Retailer' && <Ionicons name="checkmark" size={RFValue(18)} color="black" />}
           </TouchableOpacity>
         </View>

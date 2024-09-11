@@ -25,7 +25,7 @@ const IntroScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           navigation.replace('RetailerScreen');
           break;
         case 'Wholesaler':
-          navigation.replace('WholesalerScreen');
+          navigation.replace('AdminDashboard');
           break;
         default:
           navigation.replace('GetStarted'); // Fallback to GetStarted if role is not defined

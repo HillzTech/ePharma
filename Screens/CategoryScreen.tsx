@@ -10,6 +10,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { RFValue } from "react-native-responsive-fontsize";
 import { Ionicons } from "@expo/vector-icons";
 import { useCategories } from "../contexts/CategoriesContext";
+import CostumerFooter from "../Components/CostumerFooter";
 
 interface Category {
     id: string;
@@ -17,11 +18,11 @@ interface Category {
     imageUrl: string;
 }
 
-const CategoryScreen: React.FC = () => {
+const CategoryScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
     const { categories, loading } = useCategories(); 
 
     const [isLoading, setLoading] = useState(false);
-    const navigation = useNavigation<any>();
+
 
    
     const handleCategoryPress = (category: string) => {
@@ -35,7 +36,7 @@ const CategoryScreen: React.FC = () => {
     return (
         <SafeAreaView style={styles.container}>
             {isLoading && <LoadingOverlay />}
-            <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:wp('1%'), marginBottom:hp('-1%'), bottom:hp('2%')}}>
+            <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:wp('1%'), marginBottom:hp('-4%'), bottom:hp('2%'), padding: hp('2%'), left:wp('5%')}}>
     <TouchableOpacity  onPress={handleBack}>
     <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
     </TouchableOpacity>
@@ -43,6 +44,7 @@ const CategoryScreen: React.FC = () => {
    <Text style={{fontFamily:'Poppins-Bold', fontSize:RFValue(18), right:wp('40%')}}>Categories</Text>
   
    </View>
+   <View style={{ padding:hp('2%'),  marginBottom:  hp('10%'),}}>
    <FlatList
                 data={categories}
                 keyExtractor={(item) => item.name}
@@ -58,6 +60,11 @@ const CategoryScreen: React.FC = () => {
                     </TouchableOpacity>
                 )}
             />
+   </View>
+<CostumerFooter route={route} navigation={navigation}/>
+<View style={{ bottom: hp('12%'), backgroundColor: 'black', height: hp('10%'),  }}>
+              <></>
+          </View>
         </SafeAreaView>
     );
 };
@@ -66,7 +73,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#D3D3D3',
-        padding: hp('2%'),
+       
     },
     categoryButton: {
         

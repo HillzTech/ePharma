@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Product } from '../types';
 import axios from 'axios';
-import { Ionicons } from '@expo/vector-icons';
+import { EvilIcons, Ionicons } from '@expo/vector-icons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const CartScreen: React.FC = () => {
@@ -104,22 +104,25 @@ const CartScreen: React.FC = () => {
       </View>
 
       {cart.length > 0 ? (
-        <FlatList<Product>
+        <><FlatList<Product>
           data={cart}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.cartList}
-        />
+          contentContainerStyle={styles.cartList} /><View style={styles.totalContainer}>
+            <Text style={styles.totalText}>Total Price: N{totalPrice.toFixed(2)}</Text>
+            <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+              <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+            </TouchableOpacity>
+          </View></>
       ) : (
-        <Text style={styles.emptyCartText}>Your cart is empty</Text>
+        <>
+        <EvilIcons name="cart" size={340} color="grey" style={{marginTop:hp('19%')}}/>
+        <Text style={styles.emptyCartText}>Whoosp</Text>
+        <Text style={{fontFamily:'Poppins-Bold', textAlign:"center", fontSize:RFValue(15), color:'grey',top:hp('9%') }}>Your cart is empty</Text>
+        </>
       )}
 
-      <View style={styles.totalContainer}>
-        <Text style={styles.totalText}>Total Price: N{totalPrice.toFixed(2)}</Text>
-        <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
-          <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
-        </TouchableOpacity>
-      </View>
+      
     </View>
   );
 };
@@ -229,10 +232,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
   },
   emptyCartText: {
-    fontSize: RFValue(16),
-    fontFamily: 'Poppins-Bold',
+    fontSize: RFValue(18),
+    fontFamily: 'OpenSans-Bold',
     textAlign: 'center',
     color: 'black',
+    marginTop: hp('9%'),
   },
 });
 

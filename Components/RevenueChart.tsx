@@ -1,117 +1,172 @@
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { BarChart } from 'react-native-chart-kit';
 import { db } from './firebaseConfig';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Picker } from '@react-native-picker/picker';
 import { RFValue } from 'react-native-responsive-fontsize';
 import StrokedText from './StrokedText';
+import { useAuth } from '../contexts/authContext';
+import { Entypo, FontAwesome, Ionicons } from '@expo/vector-icons';
 
-
-
-// Full month names for the picker
+// Full month names and abbreviations
 const fullMonthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Abbreviations for the chart labels
 const monthAbbreviations = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
 // Dynamically generate years from 2021 to the current year + 5
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: currentYear - 2024 + 12 }, (_, i) => (2024 + i).toString());
+const years = Array.from({ length: currentYear - 2021 + 6 }, (_, i) => (2021 + i).toString());
 
-// Fetch revenue data from Firestore
-const fetchRevenueData = async (userId: string, selectedMonth: string, selectedYear: string) => {
-  let revenueQuery;
+// Fetch revenue data for all months of a given year
+const fetchAnnualRevenueData = async (userId: string, year: string) => {
+  const revenueData = [];
+  for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+    const month = fullMonthNames[monthIndex];
+    const revenueDocId = `${year}-${month}`;
+    const revenueRef = doc(db, `users/${userId}/revenue/${revenueDocId}`);
+    const revenueSnapshot = await getDoc(revenueRef);
 
-  if (selectedMonth && selectedYear) {
-    revenueQuery = query(
-      collection(db, `users/${userId}/revenue`),
-      where('month', '==', selectedMonth),
-      where('year', '==', selectedYear)
-    );
-  } else {
-    revenueQuery = collection(db, `users/${userId}/revenue`);
+    if (revenueSnapshot.exists()) {
+      revenueData.push({
+        month: monthAbbreviations[monthIndex],
+        total: revenueSnapshot.data().total
+      });
+    } else {
+      revenueData.push({
+        month: monthAbbreviations[monthIndex],
+        total: 0
+      });
+    }
   }
-
-  const revenueSnapshot = await getDocs(revenueQuery);
-  const revenueData = revenueSnapshot.docs.map(doc => ({
-    month: doc.data().month, // Use the 'month' field from Firestore document
-    year: doc.data().year, // Use the 'year' field from Firestore document
-    total: doc.data().total
-  }));
-
   return revenueData;
 };
 
 // Component to display the revenue chart
 const RevenueChart = ({ userId }: { userId: string }) => {
   const [revenueData, setRevenueData] = useState<{ month: string; total: number }[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [allTotalRevenue, setAllTotalRevenue] = useState<number>(0);
+  const [tooltipVisible, setTooltipVisible] = useState<{ [key: string]: boolean }>({}); // For tooltips
+  const { user } = useAuth();
+
+  // Set default value for the current year
+  useEffect(() => {
+    const now = new Date();
+    setSelectedYear(now.getFullYear().toString());
+  }, []);
 
   useEffect(() => {
     const loadRevenueData = async () => {
-      const data = await fetchRevenueData(userId, selectedMonth || '', selectedYear || '');
-      setRevenueData(data);
+      if (selectedYear) {
+        const data = await fetchAnnualRevenueData(userId, selectedYear);
+        setRevenueData(data);
+      }
     };
 
     loadRevenueData();
-  }, [userId, selectedMonth, selectedYear]);
+  }, [userId, selectedYear]);
 
   // Prepare data for the chart
   const chartData = {
-    labels: monthAbbreviations, // Use the month abbreviations for the chart
+    labels: revenueData.map(data => data.month),
     datasets: [
       {
-        data: monthAbbreviations.map((_, index) => {
-          const entry = revenueData.find(data => data.month === fullMonthNames[index]);
-          return entry ? entry.total : 0; // Default to 0 if no data for the month
-        }),
+        data: revenueData.map(data => data.total),
       },
     ],
+    
   };
 
-  // Calculate the total revenue
-const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
+  // Calculate the total revenue for the selected year
+  const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
 
+  useEffect(() => {
+    const fetchRevenueAndWithdrawals = async () => {
+      if (user) {
+        // Fetch total revenue
+        const revenueRef = collection(db, `users/${user.uid}/revenue`);
+        const revenueDocs = await getDocs(revenueRef);
+
+        let totalRevenue = 0;
+        revenueDocs.forEach((doc) => {
+          totalRevenue += doc.data().total;
+        });
+
+        // Fetch total withdrawn amount
+        const withdrawalsRef = collection(db, 'withdrawals');
+        const withdrawalsDocs = await getDocs(withdrawalsRef);
+
+        let totalWithdrawn = 0;
+        withdrawalsDocs.forEach((doc) => {
+          if (doc.data().userId === user.uid) {
+            totalWithdrawn += doc.data().amount;
+          }
+        });
+
+        // Set the total revenue minus total withdrawn
+        setAllTotalRevenue(totalRevenue - totalWithdrawn);
+      }
+    };
+
+    fetchRevenueAndWithdrawals();
+  }, [user]);
 
   return (
     <View>
       <View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal:wp('5%')}}>
-        <View style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop:hp('2%')}}>
-          <Text style={{ color: 'blue', fontFamily:'OpenSans-Bold', fontSize:RFValue(15) }}>Revenue</Text>
-          <View style={{bottom:hp('0.3')}}>
-          <StrokedText
-        text={` #${totalRevenue.toFixed(2)}`}
-        strokeColor="white"
-        strokeWidth={3} 
-        fontSize={RFValue(14)}
-      
-      />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: wp('5%') }}>
+          <View style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop: hp('2%') }}>
+            <View style={styles.headerContainer}>
+              <TouchableOpacity onPress={() => setTooltipVisible(prev => ({ ...prev, totalRevenue: !prev.totalRevenue }))}>
+                <View style={styles.headerItem}>
+                  <Text style={styles.headerText}>Total Revenue</Text>
+                  <Entypo name="info-with-circle" size={10} color="grey" />
+                </View>
+              </TouchableOpacity>
+              {tooltipVisible.totalRevenue && (
+                <View style={styles.tooltip}>
+                  <Text style={styles.tooltipText}>Total revenue represents the sum of all income available</Text>
+                </View>
+              )}
+              <View style={styles.totalRevenueContainer}>
+                <StrokedText
+                  text={` #${allTotalRevenue.toFixed(2)}`}
+                  strokeColor="white"
+                  strokeWidth={3}
+                  fontSize={RFValue(14)}
+                />
+              </View>
+            </View>
 
+            <View style={styles.headerContainer}>
+              <TouchableOpacity onPress={() => setTooltipVisible(prev => ({ ...prev, annualRevenue: !prev.annualRevenue }))}>
+                <View style={styles.headerItem}>
+                  <Text style={styles.headerText}>Annual Revenue</Text>
+                  <Entypo name="info-with-circle" size={10} color="grey"/>
+                </View>
+              </TouchableOpacity>
+              {tooltipVisible.annualRevenue && (
+                <View style={styles.tooltip}>
+                  <Text style={styles.tooltipText}>Annual revenue represents the total income made in the selected year.</Text>
+                </View>
+              )}
+              <View style={styles.totalRevenueContainer}>
+                <StrokedText
+                  text={` #${totalRevenue.toFixed(2)}`}
+                  strokeColor="white"
+                  strokeWidth={3}
+                  fontSize={RFValue(14)}
+                />
+              </View>
+            </View>
           </View>
-          
-         
-          </View>
-          
 
           <View style={styles.pickerContainer}>
-          <Picker
-              selectedValue={selectedMonth}
-              style={styles.picker}
-              onValueChange={(itemValue: string | null) => setSelectedMonth(itemValue)}
-            >
-              <Picker.Item label="Month" value={null} />
-              {fullMonthNames.map((month, index) => (
-                <Picker.Item key={index} label={month} value={month} />
-              ))}
-            </Picker>
-
             <Picker
               selectedValue={selectedYear}
               style={styles.picker}
@@ -124,44 +179,42 @@ const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
             </Picker>
           </View>
         </View>
-           
+
         <ScrollView horizontal>
-        <View style={styles.chartContainer}>
-          <BarChart
-            data={chartData}
-            width={wp('110%')} // Adjust the width as needed
-            height={hp('37%')}
-            yAxisLabel="#"
-            yAxisSuffix="k"
-            chartConfig={{
-              backgroundColor: '#FFFFFF',
-              backgroundGradientFrom: '#FFFFFF',
-              backgroundGradientTo: 'white',
-              decimalPlaces: 2,
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              barPercentage: 0.6,
-              
-              style: {
-                borderRadius: 16,
-              
-              },
-              propsForLabels: {
-                fontSize: 9,
-              },
-              propsForVerticalLabels: {
-                fontSize: 9,
-              },
-              propsForHorizontalLabels: {
-                fontSize: 9,
-              },
-            }}
-            style={{
-              marginVertical: 8,
-              borderRadius: 10,
-              
-            }}
-          />
-        </View>
+          <View style={styles.chartContainer}>
+            <BarChart
+              data={chartData}
+              width={wp('97%')} // Adjust the width as needed
+              height={hp('32%')}
+              yAxisLabel="#"
+              yAxisSuffix="k"
+              chartConfig={{
+                backgroundColor: '#FFFFFF',
+                backgroundGradientFrom: '#FFFFFF',
+                backgroundGradientTo: 'white',
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity} )`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                barPercentage: 0.6,
+                style: {
+                  borderRadius: 16,
+                },
+                propsForLabels: {
+                  fontSize: 10,
+                },
+                propsForVerticalLabels: {
+                  fontSize: 10,
+                },
+                propsForHorizontalLabels: {
+                  fontSize: 10,
+                },
+              }}
+              style={{
+                marginVertical: 8,
+                borderRadius: 10,
+              }}
+            />
+          </View>
         </ScrollView>
       </View>
     </View>
@@ -171,20 +224,48 @@ const totalRevenue = revenueData.reduce((sum, data) => sum + data.total, 0);
 const styles = StyleSheet.create({
   pickerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal:wp('9%'),
-    bottom:hp('0.4%')
-    
-  
+    justifyContent: 'center',
+    paddingHorizontal: wp('9%'),
+    bottom: hp('0.4%'),
   },
   picker: {
     height: hp('3%'),
-    width: wp('29%'),
+    width: wp('40%'),
   },
- 
   chartContainer: {
     alignItems: 'center', // Center the chart horizontally
-   paddingHorizontal: 5
+    paddingHorizontal: 5,
+  },
+  headerContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: hp('0.5%'),
+  },
+  headerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    color: 'grey',
+    fontFamily: 'OpenSans-Bold',
+    fontSize: RFValue(10),
+    marginRight: wp('0.2%'),
+  },
+  tooltip: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: wp('2%'),
+    borderRadius: 5,
+    position: 'absolute',
+    top: hp('5%'),
+    zIndex: 1000,
+  },
+  tooltipText: {
+    color: 'white',
+    fontSize: RFValue(12),
+  },
+  totalRevenueContainer: {
+    bottom: hp('0.3'),
   },
 });
 

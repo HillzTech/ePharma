@@ -99,7 +99,8 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
           // Calculate percentage discount
           const productPriceNum = parseFloat(productPrice);
           const costPriceNum = parseFloat(costPrice);
-          const percentageDiscount = (( costPriceNum - productPriceNum) / costPriceNum) * 100;
+          const percentageDiscount = Math.ceil(((costPriceNum - productPriceNum) / costPriceNum) * 100);
+              
   
           // Prepare product data with image URLs and bulk info
           const productData = {
@@ -154,14 +155,16 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
     return (
         <SafeAreaView style={styles.container}>
             {isLoading && <LoadingOverlay />}
-            <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+            
             <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: hp('0.1%'), right: wp('7%'), bottom: hp('2%') }}>
                 <TouchableOpacity onPress={goBack}>
                     <Ionicons name="chevron-back" size={RFValue(27)} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.header}>Upload Product</Text>
             </View>
+             
 
+            <ScrollView contentContainerStyle={styles.scrollViewContainer}>
             <TouchableOpacity onPress={() => setShowModal(true)} style={styles.input}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text>Category*</Text>
@@ -203,11 +206,12 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
             />
             <Text style={{ fontFamily: 'Poppins-Regular', fontSize: RFValue(9), left: wp('1%') }}>Write details below</Text>
             <TextInput
-                style={styles.input}
+                style={styles.presinput}
                 placeholder="Prescription*"
                 placeholderTextColor="black"
                 value={prescription}
                 onChangeText={setPrescription}
+                multiline={true}
             />
 
 
@@ -270,7 +274,7 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
             </ScrollView>
 
             <TouchableOpacity onPress={handleUpload} style={{ bottom: hp('1%') }}>
-                <Text style={{ textAlign: 'center', top: hp('3%'), backgroundColor: 'blue', width: wp('80%'), padding: wp('3.5%'), borderRadius: 6, color: 'white', fontFamily: 'Poppins-Bold', left: wp('2.5%'), marginBottom: hp('3.5%') }}>UPLOAD PRODUCT</Text>
+                <Text style={{ textAlign: 'center', top: hp('3%'), backgroundColor: 'blue', width: wp('80%'), padding: wp('3.5%'), borderRadius: 6, color: 'white', fontFamily: 'Poppins-Bold', left: wp('3.5%'), marginBottom: hp('3.5%') }}>UPLOAD PRODUCT</Text>
             </TouchableOpacity>
             </ScrollView>
             {/* Category Modal */}
@@ -332,6 +336,19 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         fontFamily: 'Poppins-Regular',
     },
+
+    presinput: {
+      height: hp('15%'),
+      borderColor: 'white',
+      borderWidth: 2,
+      marginBottom: hp('1.5%'),
+      paddingHorizontal: wp('3%'),
+      borderRadius: 5,
+      fontFamily: 'Poppins-Regular',
+      flexWrap: 'wrap', 
+      justifyContent: 'center',
+      
+  },
     imagePicker: {
         marginBottom: hp('2%'),
         paddingVertical: hp('3%'),
@@ -409,6 +426,7 @@ const styles = StyleSheet.create({
         justifyContent:'center',
         alignItems:'center',
         marginBottom: hp('3%'),
+      
         
         
     },
@@ -419,8 +437,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         backgroundColor: 'white',
         borderColor: 'blue',
-        marginBottom: hp('1.5%'),
-        
+        margin: wp('1%'),
     },
     tagSelected: {
         backgroundColor: 'blue',

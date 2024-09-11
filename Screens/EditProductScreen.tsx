@@ -16,6 +16,8 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
     const [product, setProduct] = useState<any>(null);
     const [title, setTitle] = useState('');
     const [price, setPrice] = useState('');
+    const [costPrice, setCostPrice] = useState('');
+    const [percentageDiscount, setPercentageDiscount] = useState('');
     const [images, setImages] = useState<string[]>([]);
     const [prescription, setPrescription] = useState('');
     const { user } = useAuth();
@@ -37,6 +39,8 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
                     setProduct(data);
                     setTitle(data.title);
                     setPrice(data.price.toString());
+                    setCostPrice(data.costPrice.toString());
+                    setPercentageDiscount(data.percentageDiscount.toString());
                     setImages(data.imageUrls || []);
                     setPrescription(data.prescription || '');
                 } else {
@@ -71,6 +75,11 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
     
             const productData = userDocSnap.data();
             const category = productData?.category;
+
+            const productPriceNum = parseFloat(price);
+          const costPriceNum = parseFloat(costPrice);
+          const percentageDiscount = Math.ceil(((costPriceNum - productPriceNum) / costPriceNum) * 100);
+          
     
             if (!category) {
                 Alert.alert("Error", "Product category is missing.");
@@ -82,8 +91,11 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
             await updateDoc(userDocRef, {
                 title,
                 price: parseFloat(price),
+                costPrice: parseFloat(costPrice),
+                percentageDiscount: percentageDiscount,
                 imageUrls: images,
                 prescription,
+                
             });
     
             // Update the product in the category's collection
@@ -91,6 +103,8 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
             await updateDoc(categoryDocRef, {
                 title,
                 price: parseFloat(price),
+                 costPrice: parseFloat(costPrice),
+                percentageDiscount: percentageDiscount,
                 imageUrls: images,
                 prescription,
             });
@@ -100,6 +114,8 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
             await updateDoc(pharmacyDocRef, {
                 title,
                 price: parseFloat(price),
+                 costPrice: parseFloat(costPrice),
+                percentageDiscount: percentageDiscount,
                 imageUrls: images,
                 prescription,
             });
@@ -185,14 +201,25 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
                         onChangeText={setPrice}
                     />
                 </View>
+                <View style={styles.fieldContainer}>
+                    <Text style={styles.label}>Cost Price*</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter cost price"
+                        keyboardType="numeric"
+                        value={costPrice}
+                        onChangeText={setCostPrice}
+                    />
+                </View>
 
                 <View style={styles.fieldContainer}>
                     <Text style={styles.label}>Prescription*</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { height: hp('10%') }]}
                         placeholder="Enter prescription"
                         value={prescription}
                         onChangeText={setPrescription}
+                        multiline={true}
                     />
                 </View>
                  

@@ -18,7 +18,9 @@ interface Product {
   tags: string[];
   userId: string; // Add this line
   pharmacyName: string; 
-  percentageDiscount: string
+  percentageDiscount: string;
+  costPrice: string;
+  
 }
 
 interface PharmacyDetails {
@@ -131,9 +133,17 @@ const PharmacyDetailsScreen: React.FC = () => {
       <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.title}</Text>
-        <Text style={styles.productPrice}>#{item.price.toFixed(2)}</Text>
+        <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
+
+
+        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:wp('8%'), gap:wp('1%') }}>
+        <Text style={{ fontFamily:'OpenSans-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
+        <Text style={{ fontFamily:'OpenSans-Regular', fontSize:RFValue(10), textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
+
+       
+
+        </View>
         
-        <Text style={{ fontFamily:'Poppins-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal:8, right: wp('11%')}}>{item.percentageDiscount}%</Text>
       </View>
     </TouchableOpacity>
   );
@@ -237,6 +247,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 8,
     bottom: hp('0.8%'),
   },
+    
+  
   productInfo: {
     alignItems: 'center',
     marginTop: wp('1%'),
@@ -244,6 +256,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: RFValue(12),
     fontFamily: 'Poppins-Regular',
+    top: hp('0.8%'),
   },
   productPrice: {
     fontSize: RFValue(14),

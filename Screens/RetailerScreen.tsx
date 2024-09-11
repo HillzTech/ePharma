@@ -17,6 +17,7 @@ import LoadingOverlay from '../Components/LoadingOverlay';
 import { useAvatar } from '../contexts/AvatarContext';
 import RevenueChart from '../Components/RevenueChart';
 import RetailFooter from '../Components/RetailFooter';
+import { usePharmacy } from '../contexts/PharmacyContext';
 
 
 interface Product {
@@ -42,7 +43,7 @@ const RetailerScreen: React.FC<{ route: any, navigation: any }> = ({ route, navi
   const [isLoading, setLoading] = useState(false);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0); // State for total products
-  const [pharmacyName, setPharmacyName] = useState<string>('');
+  const { pharmacyName, fetchPharmacyName } = usePharmacy();
 
 
 
@@ -55,20 +56,7 @@ const RetailerScreen: React.FC<{ route: any, navigation: any }> = ({ route, navi
       fetchAvatar(currentUser.uid);
     }
   }, []);
-  const fetchPharmacyName = async (userId: string) => {
-    try {
-      const docRef = firebase.firestore().collection('pharmacy').doc(userId);
-      const doc = await docRef.get();
-      if (doc.exists) {
-        setPharmacyName(doc.data()?.pharmacyName || 'Pharmacy not found');
-      } else {
-        setPharmacyName('Pharmacy not found');
-      }
-    } catch (error) {
-      console.error('Error fetching pharmacy name:', error);
-      setPharmacyName('Error fetching pharmacy name');
-    }
-  };
+ 
 
   const fetchAvatar = async (userId: string) => {
     try {
@@ -191,13 +179,18 @@ const selectedIconStyle = {
 
 
 
-const handleback = async() => {
-  navigation.navigate('LoginScreen')
-}
+const navigateToRetailerOrders = (tag: string) => {
+  navigation.navigate('RetailerOrderScreen', { tag });
+};
 
 const handleLogOut = async ()=>{
   await logout();
   navigation.navigate('LoginScreen');
+}
+
+const handleInventory = async ()=>{
+
+  navigation.navigate('InventoryScreen');
 }
 
 const [pendingCount, setPendingCount] = useState(0);
@@ -273,28 +266,6 @@ const [pendingCount, setPendingCount] = useState(0);
   }, []);
   
 
-/* const updateRevenue = async (userId: string, month: string, amount: number) => {
-  try {
-    const revenueDocRef = doc(db, `users/${userId}/revenue/${month}`);
-    await updateDoc(revenueDocRef, {
-      total: increment(amount),
-    });
-  } catch (error) {
-    console.error('Error updating revenue: ', error);
-  }
-};
-
-
-// Example function to handle a sale
-const handleSale = async (userId: string, amount: number) => {
-  const currentMonth = new Date().toISOString().slice(0, 7); // Format as YYYY-MM
-
-  // Update revenue for the current month
-  await updateRevenue(userId, currentMonth, amount);
-};
-
-
-*/
 
 
 
@@ -302,12 +273,12 @@ const handleSale = async (userId: string, amount: number) => {
   return (
     <SafeAreaView style={styles.container}>
          {isLoading && <LoadingOverlay />}
-   <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('5%'), top:hp('3%')}}>
+   <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'center', padding:wp('5%'), top:hp('3%')}}>
     <TouchableOpacity  onPress={handleLogOut}>
     <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
     </TouchableOpacity>
     {user && (
-   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('30%'), bottom:hp('0.4%')}}> { pharmacyName || user?.username }</Text>
+   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), bottom:hp('0.4%')}}> { pharmacyName || user?.username }</Text>
   )}
    </View>
 
@@ -341,8 +312,11 @@ const handleSale = async (userId: string, amount: number) => {
         <Text>Loading...</Text>
       )}
    </View>
+   
 
    <View style={{flexDirection:'row', justifyContent:'space-around',alignItems:'center', flexWrap:'wrap', gap:wp('2%'), padding:wp('3%')}}>
+
+   <TouchableOpacity onPress={() => navigateToRetailerOrders('Cancelled')} >
   
     <View style={{width:wp('45%'), paddingVertical:hp('2%'), backgroundColor:'white', borderRadius:5}}>
     <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('5%')}}>
@@ -359,7 +333,9 @@ const handleSale = async (userId: string, amount: number) => {
    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10), left:wp('5%'), opacity:0.6, top:hp('0.2%')}}>Cancelled</Text>
 
     </View>
+    </TouchableOpacity>
 
+    <TouchableOpacity onPress={() => navigateToRetailerOrders('Pending')} >
 
     <View style={{width:wp('45%'), paddingVertical:hp('2%'), backgroundColor:'white',borderRadius:5}}>
     <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('5%')}}>
@@ -375,7 +351,9 @@ const handleSale = async (userId: string, amount: number) => {
     
    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10), left:wp('5%'), opacity:0.6, top:hp('0.2%')}}>Pending</Text>
     </View>
+    </TouchableOpacity>
 
+    <TouchableOpacity onPress={() => navigateToRetailerOrders('Delivered')}>
 
     <View style={{width:wp('45%'), paddingVertical:hp('2%'), backgroundColor:'white',borderRadius:5}}>
     <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center',paddingHorizontal:wp('5%')}}>
@@ -392,7 +370,10 @@ const handleSale = async (userId: string, amount: number) => {
    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10), left:wp('5%'), opacity:0.6, top:hp('0.2%')}}>Delivered</Text>
     </View>
 
+    </TouchableOpacity>
 
+
+    <TouchableOpacity onPress={handleInventory} >
     <View style={{width:wp('45%'), paddingVertical:hp('1.6%'), backgroundColor:'white',borderRadius:5}}>
     <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center',paddingHorizontal:wp('5%')}}>
     <MaterialCommunityIcons name="target" size={28} color="blue" opacity={0.5} style={{right:wp('1%')}}/>
@@ -407,7 +388,7 @@ const handleSale = async (userId: string, amount: number) => {
     
    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10), left:wp('5%'), opacity:0.6, bottom:hp('0.3')}}>Still in stock</Text>
     </View>
-
+    </TouchableOpacity>
     
 
     

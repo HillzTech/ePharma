@@ -17,7 +17,7 @@ const PurchaseSuccessful: React.FC<{ navigation: any }> = ({ navigation }) => {
 
      </ImageBackground>
 
-     <Text style={{fontFamily:'Poppins-Bold', fontSize:RFValue(20) , top:hp('20%')}}>Payment Successfully.</Text>
+     <Text style={{fontFamily:'Poppins-Bold', fontSize:RFValue(20) , top:hp('20%')}}>Payment Successful.</Text>
 
      <Text style={{fontFamily:'Poppins-Regular', fontSize:RFValue(13) , top:hp('20%')}}>Your order will be delivered soon.</Text>
 
