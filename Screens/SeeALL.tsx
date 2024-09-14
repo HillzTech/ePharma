@@ -137,11 +137,11 @@ interface Pharmacy {
     return (
       <SafeAreaView style={styles.container}>
          {isLoading && <LoadingOverlay />}
-         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginTop: hp('5%'), right: wp('5%') }}>
+         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginTop: hp('5%'), right: wp('5%'), marginBottom: hp('2%') }}>
          <TouchableOpacity onPress={handleBack} >
           <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
           </TouchableOpacity>
-          <Text style={{textAlign:'center', fontFamily:'Poppins-Bold', fontSize:RFValue(18), right: wp('9%')}}>Sell All Pharmacies</Text>
+          <Text style={{textAlign:'center', fontFamily:'Poppins-Bold', fontSize:RFValue(18), right: wp('15%')}}>Pharmacies</Text>
         </View>
 
         <View style={{ padding: wp('0%') }}>

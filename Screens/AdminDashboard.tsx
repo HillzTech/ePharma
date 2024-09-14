@@ -149,7 +149,7 @@ const AdminDashboard: React.FC<{ route: any, navigation: any }> = ({ route, navi
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: wp('6%'), bottom: hp('0.45') }}>
                         <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(22) }}>{totalProducts}</Text>
-                        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(10) }}>0%</Text>
+                        
                     </View>
                     <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(10), left: wp('5%'), opacity: 0.6, top: hp('0.2%') }}>Products</Text>
                 </View>

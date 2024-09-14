@@ -32,7 +32,7 @@ import PharmacyInfo from './Screens/PharmacyInfo';
 import { CartProvider } from './contexts/CartContext';
 import PharmacyDetailsScreen from './Screens/PharmacyDetailsScreen';
 import AddToCartScreen from './Screens/AddToCartScreen';
-import { ProductProvider } from './contexts/ProductContext';
+import { AllProductsProvider } from './contexts/AllProductsContext';
 import CartScreen from './Screens/CartScreen';
 import Paystack from 'paystack-react-native';
 import PaymentScreen from './Screens/PaymentScreen';
@@ -56,6 +56,10 @@ import AdminMessagingScreen from './Screens/AdminMessagingScreen';
 import ProfileSettingsScreen from './Screens/ProfileSettingsScreen';
 import ProductScreen from './Screens/ProductScreen';
 import SeeAll from './Screens/SeeALL';
+import AllProductsScreen from './Screens/AllProductsScreen';
+import OtcDrugs from './Screens/OtcDrugs';
+import FAQScreen from './Screens/FAQScreen';
+import { Platform } from 'react-native';
 
 
 
@@ -115,7 +119,7 @@ export default function App() {
         <AvatarProvider>
         <CategoriesProvider>
         <CartProvider>
-        <ProductProvider>
+        <AllProductsProvider>
         <PharmacyProvider>
           <NavigationContainer>
             <Stack.Navigator
@@ -166,11 +170,14 @@ export default function App() {
               <Stack.Screen name="ProfileSettingsScreen" component={ProfileSettingsScreen} />
               <Stack.Screen name="ProductScreen" component={ProductScreen} />
               <Stack.Screen name="SeeAll" component={SeeAll} />
+              <Stack.Screen name="FAQScreen" component={FAQScreen} />
+              <Stack.Screen name="OtcDrugs" component={OtcDrugs} />
+              <Stack.Screen name="AllProductsScreen" component={AllProductsScreen} />
               <Stack.Screen name="PharmacyDetailsScreen" component={PharmacyDetailsScreen} options={{ title: 'Pharmacy Details' }}/>
             </Stack.Navigator>
           </NavigationContainer>
           </PharmacyProvider>
-          </ProductProvider>
+          </AllProductsProvider>
           </CartProvider>
           </CategoriesProvider>
         </AvatarProvider>

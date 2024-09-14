@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Switch } from 'react-native';
 import { getAuth, updatePassword, updateEmail, deleteUser } from 'firebase/auth';
 import { getFirestore, doc, deleteDoc } from 'firebase/firestore';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -12,6 +12,7 @@ const ProfileSettingsScreen = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false); // Notification state
   const auth = getAuth();
   const db = getFirestore();
 
@@ -84,9 +85,13 @@ const ProfileSettingsScreen = () => {
     navigation.goBack();
   };
 
+  const toggleNotifications = () => {
+    setIsNotificationsEnabled(previousState => !previousState);
+    Alert.alert('Notification Status', `Notifications have been turned ${isNotificationsEnabled ? 'off' : 'on'}.`);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-
       <View style={{}}>
         <View style={{flexDirection: 'row', justifyContent: "space-around", alignItems: 'center', gap: wp('1%'),  marginBottom: hp('2%'),  right: wp('12%')}}>
           <TouchableOpacity onPress={handleBack}>
@@ -96,6 +101,15 @@ const ProfileSettingsScreen = () => {
         </View>
       </View>
 
+      {/* Notification Toggle */}
+      <View style={styles.notificationToggle}>
+        <Text style={styles.notificationText}>Enable Notifications</Text>
+        <Switch
+          value={isNotificationsEnabled}
+          onValueChange={toggleNotifications}
+        />
+      </View>
+
       <TextInput
         style={styles.input}
         placeholder="New Email"
@@ -103,8 +117,8 @@ const ProfileSettingsScreen = () => {
         onChangeText={setNewEmail}
         keyboardType="email-address"
       />
-      <TouchableOpacity onPress={handleChangeEmail}  style={{backgroundColor: 'blue', padding: wp('3%'),  borderRadius: 10, width: wp('92%'), marginBottom: hp('4%')}}> 
-        <Text style={{textAlign: 'center', color: 'white', fontFamily: 'Poppins-Bold',fontSize: RFValue(15),  }}>CHANGE EMAIL</Text>
+      <TouchableOpacity onPress={handleChangeEmail}  style={styles.button}>
+        <Text style={styles.buttonText}>CHANGE EMAIL</Text>
       </TouchableOpacity>
 
       <TextInput
@@ -115,19 +129,19 @@ const ProfileSettingsScreen = () => {
         secureTextEntry
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input]}
         placeholder="Confirm Password"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
-      <TouchableOpacity onPress={handleChangePassword}  style={{backgroundColor: 'blue', padding: wp('3%'),  borderRadius: 10, width: wp('92%'), marginBottom: hp('7%')}}> 
-        <Text style={{textAlign: 'center', color: 'white', fontFamily: 'Poppins-Bold',fontSize: RFValue(15),  }}>CHANGE PASSWORD</Text>
+      <TouchableOpacity onPress={handleChangePassword}  style={styles.button}>
+        <Text style={styles.buttonText}>CHANGE PASSWORD</Text>
       </TouchableOpacity>
 
-      <Text style={{textAlign: 'center', color: 'black', fontFamily: 'Poppins-Bold',fontSize: RFValue(15),  }}>Delete Account Permanently</Text>
-      <TouchableOpacity onPress={handleDeleteAccount}  style={{backgroundColor: 'red', padding: wp('3%'),  borderRadius: 10, width: wp('92%'), marginBottom: hp('4%')}}> 
-        <Text style={{textAlign: 'center', color: 'white', fontFamily: 'Poppins-Bold',fontSize: RFValue(15),  }}>DELETE ACCOUNT</Text>
+      <Text style={styles.deleteText}>Delete Account Permanently</Text>
+      <TouchableOpacity onPress={handleDeleteAccount}  style={styles.deleteButton}>
+        <Text style={styles.buttonText}>DELETE ACCOUNT</Text>
       </TouchableOpacity>
 
     </SafeAreaView>
@@ -138,7 +152,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: wp('4%'),
-    backgroundColor: '#fff',
+    backgroundColor:'#D3D3D3'
   },
   title: {
     fontSize: RFValue(19),
@@ -151,10 +165,48 @@ const styles = StyleSheet.create({
   input: {
     height: hp('6%'),
     borderColor: '#ccc',
-    borderWidth: 1,
     borderRadius: 4,
     paddingHorizontal: hp('3%'),
-    marginBottom: hp('2%'),
+    marginBottom: hp('3%'),
+    backgroundColor:'white'
+  },
+  button: {
+    backgroundColor: 'blue',
+    padding: wp('3%'),
+    borderRadius: 10,
+    width: wp('92%'),
+    marginBottom: hp('4%'),
+  },
+  buttonText: {
+    textAlign: 'center',
+    color: 'white',
+    fontFamily: 'Poppins-Bold',
+    fontSize: RFValue(15),
+  },
+  notificationToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp('4%'),
+    paddingHorizontal: wp('2%'),
+  },
+  notificationText: {
+    fontSize: RFValue(16),
+    fontFamily: 'Poppins-Bold',
+  },
+  deleteText: {
+    textAlign: 'center',
+    color: 'black',
+    fontFamily: 'Poppins-Bold',
+    fontSize: RFValue(15),
+    marginTop: hp('4%'),
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    padding: wp('3%'),
+    borderRadius: 10,
+    width: wp('92%'),
+    marginBottom: hp('4%'),
   },
 });
 

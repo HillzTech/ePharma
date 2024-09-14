@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
-import { Ionicons, MaterialIcons, FontAwesome5, Entypo } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, FontAwesome5, Entypo, AntDesign } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
@@ -63,7 +63,7 @@ const CustomerFooter: React.FC<{ route: any, navigation: any }> = ({ route, navi
               zIndex: 10 // Optional: if you need to ensure it's on top of other elements
           }}
       >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: wp('6%') }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: wp('7%') }}>
                   <TouchableOpacity onPress={() => handleIconPress('home', 'HomeScreen')}>
                       <Ionicons name='home' size={iconSize} color={selectedIcon === 'home' ? 'blue' : 'white'} />
                       <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey' }}>Home</Text>
@@ -80,13 +80,13 @@ const CustomerFooter: React.FC<{ route: any, navigation: any }> = ({ route, navi
 
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: wp('3%') }}>
                   <TouchableOpacity onPress={() => handleIconPress('user', 'CustomerOrderScreen')}>
-                      <Entypo name='shopping-cart' size={smallSize} color={selectedIcon === 'user' ? 'blue' : 'white'} style={{ left: wp('1.5%') }} />
+                  <AntDesign name="appstore-o"  size={smallSize} color={selectedIcon === 'user' ? 'blue' : 'white'} style={{ left: wp('1.5%') }} />
                       <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey', left: wp('1.5%') }}>Order</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => handleIconPress('medical', 'AppointmentScreen')}>
-                      <FontAwesome5 name='briefcase-medical' size={smallSize} color={selectedIcon === 'medical' ? 'blue' : 'white'} style={{ left: wp('7%') }} />
-                      <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey', left: wp('2%') }}>Pharmacists</Text>
+                      <FontAwesome5 name='briefcase-medical' size={smallSize} color={selectedIcon === 'medical' ? 'blue' : 'white'} style={{ left: wp('8%') }} />
+                      <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey', left: wp('2.7%') }}>Pharmacists</Text>
                   </TouchableOpacity>
 
 

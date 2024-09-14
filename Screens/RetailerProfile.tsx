@@ -200,7 +200,9 @@ const handleLogOut = async ()=>{
     navigation.navigate('ProfileSettingsScreen');
   }
 
-
+  const handleFAQ = async ()=>{
+    navigation.navigate('FAQScreen');
+  }
   return (
     <SafeAreaView style={styles.container}>
         {isLoading && <LoadingOverlay />}
@@ -248,7 +250,7 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -265,7 +267,7 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -280,7 +282,7 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -295,7 +297,7 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -312,7 +314,22 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+
+          </View>
+          
+        
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleFAQ} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
+          <View>
+          <Text style={styles.content}>FAQ</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Frequently asked Questions</Text>
+          </View>
+
+
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -327,7 +344,7 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -338,11 +355,12 @@ const handleLogOut = async ()=>{
         
       </View>
 
-      <View style={{bottom:hp('52.5%')}}>
-            <RetailFooter route={route} navigation={navigation} />
-            </View>
-            <View style={{top:hp('16%'), backgroundColor:'black', height:hp('10%')}}>
-            <></>
+      <View style={{bottom:hp('61%')}}>
+      <RetailFooter route={route} navigation={navigation}/>
+      <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
+              <></>
+          </View>
+
             </View>
       
 

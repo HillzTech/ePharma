@@ -152,7 +152,7 @@ const handleGoogleSignIn = async () => {
             {isLoading && <LoadingOverlay />}
         <View style={{flexDirection:'row', justifyContent:'center', alignItems:'center', marginTop:hp('8%'),}}>
         <Ionicons name="location-outline" size={iconSize} color="black" />
-        <Text style={{textAlign:'center', fontFamily:'Poppins-Bold'}}>{location?.address || 'Loading location...'}</Text>
+        <Text style={{textAlign:'center', fontFamily:'Poppins-Bold', fontSize:RFValue(11)}}>{location?.address || 'Loading location...'}</Text>
         </View>
 
         

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, D
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/storage';
-import { AntDesign, Entypo, FontAwesome, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, Entypo, EvilIcons, FontAwesome, FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -22,6 +22,8 @@ import axios from 'axios';
 import { useCart } from '../contexts/CartContext'; 
 import { useFocusEffect } from '@react-navigation/native';
 import CostumerFooter from '../Components/CostumerFooter';
+import { AllProductsContext } from '../contexts/AllProductsContext';
+import LoadingOverlay from '../Components/LoadingOverlay';
 
 interface Product {
   id: string;
@@ -48,8 +50,10 @@ const HomeScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigati
   const { avatar } = useAvatar(); // Use the avatar context
 
   const { width } = Dimensions.get('window');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [products, setProducts] = useState<any[]>([]);
+  const { products, isLoading } = useContext(AllProductsContext);
+  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const [cart, setCart] = useState<Product[]>([]);
   const iconSize = width < 395 ?30 : 34;
   const smallSize = width < 395 ?28 : 32;
@@ -170,57 +174,14 @@ useEffect(() => {
 
   
 
-  useEffect(() => {
-    if (searchQuery) {
-      const fetchProducts = async () => {
-        try {
-          const productCollection = await firebase.firestore()
-            .collection('products')
-            .where('name', '>=', searchQuery)
-            .where('name', '<=', searchQuery + '\uf8ff')
-            .get();
-          
-          const productList = productCollection.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setProducts(productList);
-          setShowSearchResults(true);
-          setShowClose(true);
-        } catch (error) {
-          console.error('Error fetching products:', error);
-        }
-      };
-
-      fetchProducts();
-    } else {
-      setProducts([]);
-      setShowSearchResults(false);
-      setShowClose(true);
-    }
-  }, [searchQuery]);
+ 
 
    const handleAddToCart = (product: Product) => {
     setCart([...cart, product]);
     Alert.alert('Success', 'Product added to cart!');
   };
 
-   const renderItem = ({ item }: { item: Product }) => (
-    <View style={styles.productContainer}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      <View style={styles.productInfo}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>${item.price}</Text>
-      </View>
-      <Button title="Add to Cart" onPress={() => handleAddToCart(item)} />
-    </View>
-  );
-
-const handleClearSearch = () => {
-  setSearchQuery('');
-  setProducts([]);
-  setShowSearchResults(false);
-};
+   
   
 const selectedIconStyle = {
   color: 'blue'
@@ -335,8 +296,8 @@ const renderPharmacyItem = ({ item }: { item: Pharmacy }) => (
     <View style={styles.pharmacyInfo}>
       <Text style={styles.pharmacyName}>{item.pharmacyName}</Text>
       
-      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', top: hp('1%'), gap:wp('4%') }}>
-          <Ionicons name="location-outline" size={RFValue(17)} color="black" />
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap:wp('4%') }}>
+          <Ionicons name="location-outline" size={RFValue(15)} color="black" />
           <Text style={styles.pharmacyDistance}>{(item.distance * 0.000621371).toFixed(0)} miles away</Text>
         </View>
       <Text style={styles.pharmacyAddress}>{item.location.address}</Text>
@@ -344,25 +305,31 @@ const renderPharmacyItem = ({ item }: { item: Pharmacy }) => (
   </TouchableOpacity>
 );
 
+// Sort products by upload time (assuming 'uploadedAt' is a timestamp field)
+useEffect(() => {
+  const sortedProducts = [...products].sort((a, b) => b.uploadedAt - a.uploadedAt);
+  setFilteredProducts(sortedProducts);
+}, [products]);
+
+// Filter products based on the search query
+useEffect(() => {
+  if (searchQuery === '') {
+    setFilteredProducts([...products].sort((a, b) => b.uploadedAt - a.uploadedAt));
+  } else {
+    const filtered = products
+      .filter(product => product.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      .sort((a, b) => b.uploadedAt - a.uploadedAt); // Sorting the filtered list by upload time
+    setFilteredProducts(filtered);
+  }
+}, [searchQuery, products]);
+
+const handleProductPress = (product: any) => {
+  navigation.navigate('AddToCartScreen', { product });
+};
 
 const handlePress = (pharmacyId: string) => {
   navigation.navigate('PharmacyDetailsScreen', { pharmacyId }); // Navigate to PharmacyDetailsScreen with pharmacyId
 };
-
-/*const renderPharmacy = ({ item }: { item: Pharmacy }) => (
-  <View style={styles.pharmacyContainer}>
-      <TouchableOpacity onPress={() => handlePress(item.id)}>
-    <Image
-      source={item.pharmacyImage ? { uri: item.pharmacyImage } : require('../assets/Pharmacy.jpg')}
-      style={styles.pharmacyImage}
-    />
-    <Text style={styles.pharmacyName}>{item.pharmacyName}</Text>
-  
-    <Text style={styles.pharmacyDistance}>{(item.distance * 0.000621371).toFixed(0)} miles away</Text>
-    </TouchableOpacity>
-  </View>
-);
-*/
 
 
 
@@ -379,6 +346,10 @@ const handlePress = (pharmacyId: string) => {
               source={avatar ? { uri: avatar } : require('../assets/avatar.png')}
               style={styles.avatar}
             />
+
+          <View  style={{  bottom:hp('2.5%'), left:wp('8.5%'), backgroundColor: 'grey', borderRadius:35, width:wp('4%'), height:wp('3.7%'), borderWidth:1, borderColor:'white' }}>
+            <EvilIcons name="navicon" size={RFValue(12)} color="white" />
+          </View>
           
            </TouchableOpacity>
             
@@ -407,45 +378,27 @@ const handlePress = (pharmacyId: string) => {
       </View>
 
       {user && (
-        <View style={{paddingHorizontal:wp('6%'), top:wp('2%')}}>
-          <Text style={{ fontSize: RFValue(19), fontFamily: 'Poppins-Bold',}}>Hi, {user.username} </Text>
+        <View style={{paddingHorizontal:wp('6%'), marginTop:wp('-2%')}}>
+          <Text style={{ fontSize: RFValue(15), fontFamily: 'Poppins-Bold',}}>Hi, {user.username} </Text>
           <Text style={{fontFamily:'Poppins-Regular', bottom:hp('1%'), fontSize:RFValue(9)}}>How Are You Today? </Text>
           
         </View>
       )}
 
+
 <View style={styles.searchContainer}>
-  <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('3%'), top:hp('4%')}}>
-    <TouchableOpacity>
-    <Ionicons name='search' size={iconSize} style={{opacity:0.6}}/>
-    </TouchableOpacity>
-
-    
-  
-  </View>
- 
- 
-    
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search medications"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      
-        <View style={{top:hp('4%'),backgroundColor:'black', height:'auto', borderRadius:10}}>
-      <FlatList
-        data={products}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-
-      />
+        <Ionicons name="search-outline" size={20} color="gray" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search products..."
+          value={searchQuery}
+          onChangeText={text => setSearchQuery(text)}
+        />
       </View>
-    
-    </View>
+
 
     <View>
-    <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-around'}}>
+    <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-around', gap:10}}>
       <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(17), color:'black'}}>Pharmacies near you</Text>
       <TouchableOpacity> 
         <Text onPress={() => navigation.navigate('SeeAll')} style={{fontFamily:'Poppins-Regular', fontSize:RFValue(15), color:'blue', top:hp('0.4%')}}>See all</Text>
@@ -456,22 +409,63 @@ const handlePress = (pharmacyId: string) => {
     </View>
 
     
-      
-        <FlatList
-          data={pharmacies}
-          renderItem={renderPharmacyItem}
-          keyExtractor={(item) => item.id}
-          numColumns={2} // Display two items in a row
-                key={2}
-                columnWrapperStyle={styles.columnWrapper}
-                contentContainerStyle={styles.productsContainer}
-                showsVerticalScrollIndicator={true}
-        />
-      
+    <View>
+    <FlatList
+  data={pharmacies}
+  renderItem={renderPharmacyItem}
+  keyExtractor={(item) => item.id}
+  horizontal
+  contentContainerStyle={styles.pharmaciesContainer} // Use this style to align items properly
+  showsHorizontalScrollIndicator={true} // Hide scroll indicator if desired
+/>
+   </View>
 
+        <View style={{ flexDirection:'row', gap:1, alignItems:'center', padding: wp('1%'), left: wp('6%') }}> 
+        <Text style={{ fontSize: RFValue(17), fontFamily: 'Poppins-Bold', }}>Trending </Text>
+        <FontAwesome5 name="fire" size={16} color="red" />
+        </View>
+
+        {isLoading ? (
+        <LoadingOverlay />
+      ) : filteredProducts.length > 0 ? (
+        <View style={{ paddingBottom: hp('69%')}}>
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleProductPress(item)}>
+              <View style={styles.productContainer}>
+                <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
+                <Text style={styles.productTitle}>{item.title}</Text>
+                <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
+                <View style={styles.discountContainer}>
+                  <Text style={styles.discountText}>-{item.percentageDiscount}%</Text>
+                  <Text style={styles.oldPrice}>N{item.costPrice}</Text>
+                </View>
+                <View style={{flexDirection: 'row', paddingBottom: wp('2%'),  left: wp('2.5%')  }}>
+                <Ionicons name="location-outline" size={15} color="black" />
+                <Text style={styles.productDistance}>{item.distance} miles away</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+        </View>
+      ) : (
+        <View style={styles.noResults}>
+          <Text style={styles.noResultsText}>No products found</Text>
+        </View>
+      )}
+  
+  
+
+           
+        
 
       <CostumerFooter route={route} navigation={navigation}/>
-      <View style={{ top: hp('2.5%'), backgroundColor: 'black', height: hp('10%'),  }}>
+      <View style={{ bottom: hp('70.5%'), backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('97.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
               <></>
           </View>
     </SafeAreaView>
@@ -499,78 +493,53 @@ const styles = StyleSheet.create({
     padding: RFValue(4),
   },
 
+  
   searchContainer: {
-    width: wp('90%'),
-    marginLeft:wp('5%'),
-    bottom: hp('2%')
-    
-  },
-  
- 
- 
-  searchInput: {
-    height: hp('6%'),
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: hp('-1%'),
-    paddingHorizontal: wp('2%'),
-    borderRadius:10,
-    textAlign:'center',
-    bottom:hp('1%'),
-    fontSize: RFValue(13),
-    fontFamily: 'Poppins-Regular',
-  
-  },
-  productContainer: {
     flexDirection: 'row',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
     alignItems: 'center',
-  
-    
-   
-  
-    
+    backgroundColor: 'white',
+    marginHorizontal: 10,
+    marginVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    elevation: 2,
+    marginTop:hp('-0.4%'),
+    marginBottom:hp('2%')
   },
-  image: {
-    width: wp('15%'),
-    height: hp('5%'),
-    marginRight:  wp('1%'),
-    
+  searchInput: { flex: 1, height: hp('5%'), paddingHorizontal: 10, fontSize: RFValue(14) },
+  listContent: {   width: wp('95%'), left: wp('3%')},
+  productContainer: { 
+     margin:wp('2%'), backgroundColor: 'white', borderRadius: 10, 
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, elevation: 2 
   },
-  productInfo: {
-    flex: 1,
-  },
-  name: {
-    fontSize: RFValue(15),
-  },
-  price: {
-    fontSize:  RFValue(15),
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    position: 'absolute',
-    right: wp('0.1%'),
-    top: hp('9%'),
-  },
-  pharmaciesListContainer: {
-    flex: 1,
-    padding: wp('7%'),
-    paddingBottom: hp('5%'),
-    
+  productImage: { width: wp('43%'), height: hp('14%'), borderTopLeftRadius: 10, borderTopRightRadius: 10 },
+  productTitle: { fontSize: RFValue(14), fontWeight: 'bold', marginVertical: 5, paddingHorizontal: wp('3%') },
+  productPrice: { fontSize: RFValue(12), color: 'green' , paddingHorizontal: wp('3%')},
+  discountContainer: { flexDirection: 'row', gap: 5, paddingHorizontal: wp('3%') },
+  discountText: { color: 'red', fontSize: RFValue(10), borderColor: 'black',borderWidth: 1,paddingHorizontal:3,borderRadius: 8},
+  oldPrice: { textDecorationLine: 'line-through', fontSize: RFValue(10) },
+  productDistance: { fontSize: RFValue(10), color: 'gray' },
+  noResults: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: wp('3%') },
+  noResultsText: { fontSize: RFValue(16), color: 'gray',  },
+ 
+ 
+  pharmaciesContainer: {
+    paddingHorizontal: wp('4%'), // Add some padding around the horizontal list
     
   },
   pharmacyContainer: {
     flexDirection: 'column',
     alignItems: 'center',
-    marginVertical: wp('1%'),
-    
-    borderWidth: 1,
-    borderColor:'white',
+    marginVertical: hp('2%'),
+    marginRight: wp('4%'),
+  
     marginHorizontal: wp('1%'),
-    borderRadius:10
-    
+    borderRadius:10,
+    height: hp('24%'),
+    backgroundColor: 'white'
   },
 
   pharmacyInfo: {
@@ -582,8 +551,8 @@ const styles = StyleSheet.create({
     borderRadius:10
   },
   pharmacyImage: {
-    width: wp('40%'),
-    height: hp('15%'),
+    width: wp('65%'),
+    height: hp('16%'),
     borderTopLeftRadius:10,
     borderTopRightRadius:10,
     borderColor:'white',
@@ -592,10 +561,9 @@ const styles = StyleSheet.create({
   pharmacyName: {
     fontSize: RFValue(12),
     fontFamily: 'Poppins-Bold',
-    
     textAlign:'center',
     flexWrap:'wrap',
-    width:wp('36%')
+  
   },
   
   pharmacyDistance: {
@@ -603,6 +571,7 @@ const styles = StyleSheet.create({
     color: '#888',
     right:wp('4%'),
     fontFamily: 'Poppins-Regular',
+    
   },
 
   pharmacyAddress: {

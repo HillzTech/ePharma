@@ -233,7 +233,7 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
           <View style={styles.itemDetails}>
             <Text style={styles.itemText}>Product: {orderItem.productTitle || 'N/A'}</Text>
             <Text style={styles.itemText}>Quantity: {orderItem.quantity || 'N/A'}</Text>
-            <Text style={styles.itemText}>Price: {orderItem.price || 'N/A'}</Text>
+            <Text style={styles.itemText}>Price: N{orderItem.price || 'N/A'}</Text>
             <Text style={styles.itemText}>Pharmacy: {orderItem.pharmacyName || 'N/A'}</Text>
           </View>
         </View>
@@ -291,12 +291,14 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
   return (
     <SafeAreaView style={styles.container}>
         {isLoading && <LoadingOverlay />}
-<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: wp('1%'), top: hp('4%') }}>
+<View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', padding: wp('1%'), marginTop: hp('4%'), right: wp('15%') }}>
         <TouchableOpacity onPress={() => navigation.navigate('RetailerScreen')}>
           <Ionicons name="chevron-back" size={29} color="black" />
         </TouchableOpacity>
-        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(18), right: wp('40%') }}>Order</Text>
+        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(18), right: wp('16%') }}>Order</Text>
       </View>
+
+
       <View style={styles.tagsContainer}>
         <TouchableOpacity
           style={[styles.tag, selectedTag === 'Pending' && styles.selectedTag]}
@@ -335,15 +337,13 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
       />
 
 
-<View style={{bottom:hp('66%')}}>
-            <RetailFooter route={route} navigation={navigation} />
+     <View style={{bottom:hp('76%')}}>
+      <RetailFooter route={route} navigation={navigation}/>
+      <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.2%'), right: wp('0%'), left: 0, zIndex: 1  }}>
+              <></>
+          </View>
+
             </View>
-
-
-            <View style={{top:hp('3%'), backgroundColor:'black', height:hp('10%')}}>
-            <></>
-            </View>
-
       
 
   
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: hp('2%'),
-    marginTop: hp('5%'),
+    marginTop: hp('1.5%'),
     paddingHorizontal: wp('2%'),
   },
   tag: {

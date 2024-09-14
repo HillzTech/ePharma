@@ -136,7 +136,7 @@ const CustomerOrderScreen: React.FC<{ route: any, navigation: any }> = ({ route,
       />
 
 <CostumerFooter route={route} navigation={navigation}/>
-<View style={{ top: hp('2.5%'), backgroundColor: 'black', height: hp('10%'),  }}>
+<View style={{ bottom: hp('70.5%'), backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('97.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
               <></>
           </View>
     </SafeAreaView>

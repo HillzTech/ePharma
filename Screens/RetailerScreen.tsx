@@ -283,26 +283,7 @@ const [pendingCount, setPendingCount] = useState(0);
    </View>
 
 
-   <View style={styles.searchContainer}>
-  <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('3%'), bottom:hp('1%'), position:'absolute', left:0, right:0, zIndex:10}}>
-    <TouchableOpacity>
-    <Ionicons name='search' size={iconSize} style={{opacity:0.7}}/>
-    </TouchableOpacity>
 
-    
-  
-  </View>
- 
- 
-    
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search meds here"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-   
-   </View>
 
    <View>
    {user ? (
@@ -382,7 +363,7 @@ const [pendingCount, setPendingCount] = useState(0);
 
    <View style={{flexDirection:'row', justifyContent:'space-between',alignItems:'center', paddingHorizontal:wp('6%'), bottom:hp('0.45')}}>
     <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(22)}}>{totalProducts}</Text>
-    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(10)}}>0%</Text>
+
     
    </View>
     
@@ -398,12 +379,11 @@ const [pendingCount, setPendingCount] = useState(0);
      
 
    <View style={{bottom:hp('66%')}}>
-            <RetailFooter route={route} navigation={navigation} />
-            </View>
+      <RetailFooter route={route} navigation={navigation}/>
+      <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
+              <></>
+          </View>
 
-
-            <View style={{top:hp('3%'), backgroundColor:'black', height:hp('10%')}}>
-            <></>
             </View>
 
       

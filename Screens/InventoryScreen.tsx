@@ -174,6 +174,7 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
         </View>
       </View>
 
+      
       <FlatList
         data={filteredProducts}
         keyExtractor={(item) => item.id}
@@ -184,13 +185,15 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
         contentContainerStyle={styles.productsContainer}
         showsVerticalScrollIndicator={false}
       />
+      
 
-      <View style={{ bottom: hp('66%') }}>
-        <RetailFooter route={route} navigation={navigation} />
-      </View>
-      <View style={{ top: hp('3%'), backgroundColor: 'black', height: hp('10%') }}>
-        <></>
-      </View>
+      <View style={{bottom:hp('76%')}}>
+      <RetailFooter route={route} navigation={navigation}/>
+      <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
+              <></>
+          </View>
+
+            </View>
     </SafeAreaView>
   );
 };

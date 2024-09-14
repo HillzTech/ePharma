@@ -21,6 +21,8 @@ interface Product {
     tags: string[];
     location: { latitude: number; longitude: number };
     distance: number;
+    userId: string; 
+    pharmacyName: string; 
 }
 
 const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
@@ -62,6 +64,7 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                 const querySnapshot = await getDocs(productsRef);
                 const productsList: Product[] = querySnapshot.docs.map(doc => {
                     const data = doc.data();
+                    
                     return {
                         id: doc.id,
                         title: data.title || '',
@@ -72,7 +75,11 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                         tags: data.tags || [],
                         location: data.location || { latitude: 0, longitude: 0 },
                         distance: 0,
+                        userId: data.userId,
+                        pharmacyName: data.pharmacyName || '',
+                        
                     };
+                    
                 });
         
                 // Calculate distances in miles and sort products by distance
@@ -116,6 +123,11 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
         setSelectedTag(tag);
     };
 
+    const handleProductPress = (product: Product) => {
+        (navigation as any).navigate('AddToCartScreen', { product});
+      };
+    
+
     const handleBack = () => {
         navigation.navigate('CategoryScreen');
     };
@@ -154,6 +166,7 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                         numColumns={2}
                         key={2}
                         renderItem={({ item }) => (
+                            <TouchableOpacity onPress={() => handleProductPress(item)}>
                             <View style={styles.productContainer}>
                                 <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
                                 <Text style={styles.productTitle}>{item.title}</Text>
@@ -167,7 +180,10 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                                 <Ionicons name="location-outline" size={15} color="black" style={{ right: wp('13%'), bottom: hp('0.8%') }} />
                                 <Text style={styles.productDistance}>{item.distance} miles away</Text>
                             </View>
+                            </TouchableOpacity>
+
                         )}
+                        
                     />
                 </>
             )}

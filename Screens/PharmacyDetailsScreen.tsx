@@ -112,7 +112,7 @@ const PharmacyDetailsScreen: React.FC = () => {
   };
 
   const handleProductPress = (product: Product) => {
-    (navigation as any).navigate('AddToCartScreen', { product, pharmacyId});
+    (navigation as any).navigate('AddToCartScreen', { product});
   };
 
   const handleBack = async () => {

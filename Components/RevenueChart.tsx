@@ -124,13 +124,13 @@ const RevenueChart = ({ userId }: { userId: string }) => {
             <View style={styles.headerContainer}>
               <TouchableOpacity onPress={() => setTooltipVisible(prev => ({ ...prev, totalRevenue: !prev.totalRevenue }))}>
                 <View style={styles.headerItem}>
-                  <Text style={styles.headerText}>Total Revenue</Text>
+                  <Text style={styles.headerText}>Total Balance</Text>
                   <Entypo name="info-with-circle" size={10} color="grey" />
                 </View>
               </TouchableOpacity>
               {tooltipVisible.totalRevenue && (
                 <View style={styles.tooltip}>
-                  <Text style={styles.tooltipText}>Total revenue represents the sum of all income available</Text>
+                  <Text style={styles.tooltipText}>Total balance represents the sum of all income available</Text>
                 </View>
               )}
               <View style={styles.totalRevenueContainer}>
@@ -185,14 +185,14 @@ const RevenueChart = ({ userId }: { userId: string }) => {
             <BarChart
               data={chartData}
               width={wp('97%')} // Adjust the width as needed
-              height={hp('32%')}
+              height={hp('39%')}
               yAxisLabel="#"
-              yAxisSuffix="k"
+              yAxisSuffix=""
               chartConfig={{
                 backgroundColor: '#FFFFFF',
                 backgroundGradientFrom: '#FFFFFF',
                 backgroundGradientTo: 'white',
-                decimalPlaces: 2,
+                decimalPlaces: 0,
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity} )`,
                 labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                 barPercentage: 0.6,

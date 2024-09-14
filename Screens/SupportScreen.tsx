@@ -105,24 +105,20 @@ const SupportScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
       await remove(adminMessagesRef);
 
       Alert.alert('Conversation Ended', 'The conversation has been ended.');
-      navigation.navigate('RetailerProfile');
+      navigation.goBack();;
     } catch (error) {
       console.error('Error ending conversation:', error);
       Alert.alert('Error', 'Failed to end the conversation.');
     }
   };
 
-  const handleBack = () => {
-    navigation.navigate('RetailerProfile');
-  };
+ 
 
   return (
     <SafeAreaView style={{ flex: 1, padding: hp('2%'), backgroundColor:'#D3D3D3' }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: wp('7%'), right: hp('1%') }}>
-        <TouchableOpacity onPress={handleBack}>
-          <Ionicons name="chevron-back" size={29} color="black" />
-        </TouchableOpacity>
-        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(19), left: wp('3%') }}>Support</Text>
+        
+        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(19), left: wp('33%') }}>Support</Text>
         <TouchableOpacity onPress={endConversation} style={{ padding: 10, backgroundColor: 'red', borderRadius: 10 }}>
           <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(12), color: 'white' }}>End Chat</Text>
         </TouchableOpacity>
@@ -149,7 +145,7 @@ const SupportScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
       />
       <View style={{ flexDirection: 'row', marginVertical: hp('2%') }}>
         <TextInput
-          style={{ flex: 1, borderColor: 'gray', borderWidth: 1, borderRadius: 10, height: wp('25%'), padding: wp('2%') }}
+          style={{ flex: 1, backgroundColor: 'white', borderRadius: 10, height: wp('25%'), padding: wp('2%') }}
           placeholder="Type your message..."
           value={message}
           onChangeText={setMessage}

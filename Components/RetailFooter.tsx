@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
-import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, FontAwesome5, AntDesign } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const RetailFooter: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
   const { width } = Dimensions.get('window');
-  const iconSize = width < 395 ? 30 : 34;
-  const smallSize = width < 395 ? 28 : 32;
+  const iconSize = width < 395 ? 28 : 32;
+  const smallSize = width < 395 ? 26 : 30;
 
   const [selectedIcon, setSelectedIcon] = useState<string>('home'); // Default selected icon
 
@@ -78,7 +78,7 @@ const RetailFooter: React.FC<{ route: any, navigation: any }> = ({ route, naviga
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => handleIconPress('order', 'RetailerOrderScreen')}>
-            <MaterialIcons name="category" size={iconSize} color={selectedIcon === 'order' ? 'blue' : 'white'} opacity={0.8} />
+            <AntDesign name="appstore-o" size={iconSize} color={selectedIcon === 'order' ? 'blue' : 'white'} opacity={0.8} />
             <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(10), color: 'grey' }}>Order</Text>
           </TouchableOpacity>
         </View>

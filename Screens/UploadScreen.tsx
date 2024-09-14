@@ -14,6 +14,8 @@ import { storage } from '../Components/firebaseConfig'; // Make sure you import 
 import GetLocation from 'react-native-get-location';
 import SuccessfulUpload from './SuccessfulUpload';
 import { useCategories } from '../contexts/CategoriesContext';
+import { serverTimestamp } from 'firebase/firestore'; 
+
 
 const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
     const { user } = useAuth();
@@ -116,6 +118,7 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
               imageUrls: imageUrls,
               tags: selectedTags,
               category, // Include the category field
+              createdAt: serverTimestamp(), 
           };
   
           // Add product to category using the generated ID

@@ -198,9 +198,20 @@ const handleLogOut = async ()=>{
   const handleComplaints = async ()=>{
     navigation.navigate('SupportScreen');
   }
+  const handleSource = async ()=>{
+    navigation.navigate('AllProductsScreen');
+  }
   
   const handleSettings = async ()=>{
     navigation.navigate('ProfileSettingsScreen');
+  }
+
+  const handleOtc = async ()=>{
+    navigation.navigate('OtcDrugs');
+  }
+
+  const handleFAQ = async ()=>{
+    navigation.navigate('FAQScreen');
   }
 
   return (
@@ -208,7 +219,7 @@ const handleLogOut = async ()=>{
         {isLoading && <LoadingOverlay />}
    <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('5%'), top:hp('3%')}}>
     <TouchableOpacity  onPress={handleback}>
-    <Ionicons name="chevron-back" size={29} color="black" />
+    <Ionicons name="chevron-back" size={23} color="black" />
     </TouchableOpacity>
    
    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('32%')}}>My profile</Text>
@@ -239,8 +250,8 @@ const handleLogOut = async ()=>{
 
       </View>
 
-      <View style={{flexDirection:'column', margin:hp('1%'), gap: hp('1%')}}>
-        <TouchableOpacity style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+      <View  style={{flexDirection:'column', margin:hp('1%'), gap: hp('2%')}}>
+        <TouchableOpacity onPress={handleOtc} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Buy OTC Drugs</Text>
@@ -248,14 +259,14 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
         
         </TouchableOpacity>
         
-        <TouchableOpacity onPress={handleComplaints} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleComplaints} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Emergency</Text>
@@ -263,61 +274,31 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleSource} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Source for Drugs</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10),  opacity:0.6}}>Chat with our Customer Support</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10),  opacity:0.6}}>Check out all products available</Text>
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
-          </View>
-          
-        
-        </TouchableOpacity>
-
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
-          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
-          <View>
-          <Text style={styles.content}>Payment methods</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Visa **34</Text>
-          </View>
-
-
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
         
         </TouchableOpacity>
 
-        
+       
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
-          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
-          <View>
-          <Text style={styles.content}>Delivery addresses</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>3 addresses</Text>
-          </View>
-
-
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
-          </View>
-          
-        
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleSettings} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleSettings} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Settings</Text>
@@ -325,14 +306,30 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}} onPress={handleLogOut}>
+        <TouchableOpacity onPress={handleFAQ} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+          <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
+          <View>
+          <Text style={styles.content}>FAQ</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Frequently asked Questions</Text>
+          </View>
+
+
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+
+          </View>
+          
+        
+        </TouchableOpacity>
+
+
+        <TouchableOpacity style={{ padding:wp('5%'), backgroundColor:'#FAF9F6',borderRadius:10}} onPress={handleLogOut}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Logout</Text>
@@ -340,7 +337,7 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={29} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
 
           </View>
           
