@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ScrollView, TextInput } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ScrollView, TextInput, Dimensions, BackHandler, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import { db } from "../Components/firebaseConfig";
@@ -10,6 +10,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { RFValue } from "react-native-responsive-fontsize";
 import GetLocation from 'react-native-get-location';
 import haversine from 'haversine-distance';
+import Geolocation from '@react-native-community/geolocation';
+
+
 
 interface Product {
     id: string;
@@ -34,85 +37,82 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
     const [isLoading, setLoading] = useState(true);
     const [categoryName, setCategoryName] = useState<string>('');
     const [userLocation, setUserLocation] = useState({ latitude: 0, longitude: 0 });
+    const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
-    useEffect(() => {
-        const fetchUserLocation = async () => {
-            try {
-                const location = await GetLocation.getCurrentPosition({
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                });
-                setUserLocation({ latitude: location.latitude, longitude: location.longitude });
-                return location; // Return location to ensure it's fetched before products
-            } catch (error) {
+
+
+  useEffect(() => {
+    const fetchUserLocation = () => {
+        Geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ latitude, longitude });
+                // Call fetchCategoryDetails here after user location is fetched
+                fetchCategoryDetails({ latitude, longitude });
+            },
+            (error) => {
                 console.error('Error fetching user location:', error);
                 setLoading(false);
+            },
+            { enableHighAccuracy: true, timeout: 15000 }
+        );
+    };
+
+    const fetchCategoryDetails = async (location: any) => {
+        try {
+            // Fetch the category name
+            const categoryRef = doc(db, 'categories', category);
+            const categoryDoc = await getDoc(categoryRef);
+            if (categoryDoc.exists()) {
+                setCategoryName(categoryDoc.data()?.name);
             }
-        };
 
-        const fetchCategoryDetails = async (location: any) => {
-            try {
-                // Fetch the category name
-                const categoryRef = doc(db, 'categories', category);
-                const categoryDoc = await getDoc(categoryRef);
-                if (categoryDoc.exists()) {
-                    setCategoryName(categoryDoc.data().name);
-                }
-        
-                // Fetch products under the category
-                const productsRef = collection(db, `categories/${category}/products`);
-                const querySnapshot = await getDocs(productsRef);
-                const productsList: Product[] = querySnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    
-                    return {
-                        id: doc.id,
-                        title: data.title || '',
-                        price: data.price || 0,
-                        costPrice: data.costPrice || 0,
-                        percentageDiscount: data.percentageDiscount || 0,
-                        imageUrls: data.imageUrls || [],
-                        tags: data.tags || [],
-                        location: data.location || { latitude: 0, longitude: 0 },
-                        distance: 0,
-                        userId: data.userId,
-                        pharmacyName: data.pharmacyName || '',
-                        
-                    };
-                    
-                });
-        
-                // Calculate distances in miles and sort products by distance
-                const productsWithDistance = productsList.map(product => {
-                    const distanceInMiles = haversine(
-                        { latitude: location.latitude, longitude: location.longitude },
-                        product.location
-                    ) / 1609.34; // Convert meters to miles
-                    return { ...product, distance: Math.round(distanceInMiles) }; // Round to nearest whole number
-                }).sort((a, b) => a.distance - b.distance); // Sort by closest distance
+            // Fetch products under the category
+            const productsRef = collection(db, `categories/${category}/products`);
+            const querySnapshot = await getDocs(productsRef);
+            const productsList: Product[] = querySnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    title: data.title || '',
+                    price: data.price || 0,
+                    costPrice: data.costPrice || 0,
+                    percentageDiscount: data.percentageDiscount || 0,
+                    imageUrls: data.imageUrls || [],
+                    tags: data.tags || [],
+                    location: data.location || { latitude: 0, longitude: 0 },
+                    distance: 0,
+                    userId: data.userId,
+                    pharmacyName: data.pharmacyName || '',
+                };
+            });
 
-                // Fetch unique tags
-                const uniqueTags = Array.from(new Set(productsList.flatMap(product => product.tags)));
-                setTags(['All', ...uniqueTags]);
+            // Calculate distances in miles and sort products by distance
+            const productsWithDistance = productsList.map(product => {
+                const distanceInMiles = haversine(
+                    { latitude: location.latitude, longitude: location.longitude },
+                    product.location
+                ) / 1609.34; // Convert meters to miles
+                return { ...product, distance: Math.round(distanceInMiles) }; // Round to nearest whole number
+            }).sort((a, b) => a.distance - b.distance); // Sort by closest distance
 
-                setProducts(productsWithDistance);
-                setFilteredProducts(productsWithDistance);
-            } catch (error) {
-                console.error('Error fetching category details:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+            // Fetch unique tags
+            const uniqueTags = Array.from(new Set(productsList.flatMap(product => product.tags)));
+            setTags(['All', ...uniqueTags]);
 
-        const initializeScreen = async () => {
-            const location = await fetchUserLocation(); // Ensure location is fetched first
-            if (location) {
-                fetchCategoryDetails(location);
-            }
-        };
+            setProducts(productsWithDistance);
+            setFilteredProducts(productsWithDistance);
+        } catch (error) {
+            console.error('Error fetching category details:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        initializeScreen();
-    }, [category]);
+    fetchUserLocation(); // Fetch user location
+}, [category]);
+
 
     const filterProductsByTag = (tag: string) => {
         if (tag === 'All') {
@@ -131,10 +131,21 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
     const handleBack = () => {
         navigation.navigate('CategoryScreen');
     };
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+          navigation.goBack();
+          return true;
+        });
+    
+        return () => {
+          backHandler.remove();
+        };
+      }, [navigation]);
 
     return (
         <SafeAreaView style={styles.container}>
             {isLoading && <LoadingOverlay />}
+            <StatusBar backgroundColor="black" barStyle="light-content"/>
             {!isLoading && (
                 <>
                    
@@ -143,7 +154,7 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                     <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(18), textAlign:'center', bottom: hp('2.3%') }}> {categoryName} </Text>
                     <View  style={{bottom: hp('6.7%')}}>
                     <TouchableOpacity onPress={handleBack} >
-                            <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+                            <Ionicons name="chevron-back" size={30} color="black" />
                         </TouchableOpacity>
                     </View>
                         
@@ -160,31 +171,67 @@ const CategoryDetailsScreen: React.FC<{ route: any, navigation: any }> = ({ rout
                         ))}
                     </View>
 
-                    <FlatList
-                        data={filteredProducts}
-                        keyExtractor={(item) => item.id}
-                        numColumns={2}
-                        key={2}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => handleProductPress(item)}>
-                            <View style={styles.productContainer}>
-                                <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
-                                <Text style={styles.productTitle}>{item.title}</Text>
-                                <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
-                                <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:wp('8%'), gap:wp('1%'), bottom:hp('1%') }}>
-        <Text style={{ fontFamily:'OpenSans-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
-        <Text style={{ fontFamily:'OpenSans-Regular', fontSize:RFValue(10), textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
-
-        </View>
-        
-                                <Ionicons name="location-outline" size={15} color="black" style={{ right: wp('13%'), bottom: hp('0.8%') }} />
-                                <Text style={styles.productDistance}>{item.distance} miles away</Text>
-                            </View>
-                            </TouchableOpacity>
-
-                        )}
+                    {windowWidth  < 1000 ? (
+                         <FlatList
+                         data={filteredProducts}
+                         keyExtractor={(item) => item.id}
+                         numColumns={2}
+                         key={2}
+                         renderItem={({ item }) => (
+                             <TouchableOpacity onPress={() => handleProductPress(item)}>
+                             <View style={styles.productContainer}>
+                                 <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
+                                 <Text style={styles.productTitle}>{item.title}</Text>
+                                 <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
+                                 <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:wp('8%'), gap:wp('1%'), bottom:hp('1%') }}>
+         <Text style={{ fontFamily:'OpenSans-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
+         <Text style={{ fontFamily:'OpenSans-Regular', fontSize:RFValue(10), textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
+ 
+         </View>
+         
+                                 <Ionicons name="location-outline" size={15} color="black" style={{ right: wp('13%'), bottom: hp('0.8%') }} />
+                                 <Text style={styles.productDistance}>{item.distance} miles away</Text>
+                             </View>
+                             </TouchableOpacity>
+ 
+                         )}
+                         
+                     />
                         
-                    />
+                         ) : (
+                            <View style={{justifyContent:'space-between', alignItems:'center', }}>
+                            <FlatList
+                            data={filteredProducts}
+                            keyExtractor={(item) => item.id}
+                            numColumns={6}
+                            key={6}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity onPress={() => handleProductPress(item)}>
+                                <View style={styles.productContainer}>
+                                    <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
+                                    <Text style={styles.productTitle}>{item.title}</Text>
+                                    <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
+                                    <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:14, gap:5, marginBottom:hp('1%') }}>
+            <Text style={{ fontFamily:'OpenSans-Bold', fontSize:10, borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
+            <Text style={{ fontFamily:'OpenSans-Regular', fontSize:11, textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
+    
+            </View>
+            <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', gap:5,}}>
+                                    <Ionicons name="location-outline" size={15} color="black" style={{ bottom: 4 }} />
+                                    <Text style={{ right: 6,fontSize: 13,color: '#666',fontFamily: 'Poppins-Regular',bottom: 2 }}>{item.distance} miles away</Text>
+
+                                    </View>
+                                </View>
+                                </TouchableOpacity>
+    
+                            )}
+                            
+                        />
+                        </View>
+
+                         )}
+
+                    
                 </>
             )}
         </SafeAreaView>
@@ -221,7 +268,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#007BFF',
     },
     tagText: {
-        fontSize: RFValue(13),
+        fontSize: 14,
         color: '#000',
         fontFamily: 'Poppins-Bold',
     },
@@ -233,25 +280,25 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     productImage: {
-        width: wp('40%'),
-        height: hp('13%'),
+        width: 140,
+        height: 80,
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
         marginBottom: hp('1%'),
     },
     productTitle: {
         color: 'black',
-        fontSize: RFValue(15),
+        fontSize: 16,
         textAlign: 'center',
         fontFamily: 'OpenSans-Bold',
     },
     productPrice: {
-        fontSize: RFValue(13),
+        fontSize: 14,
         color: 'black',
         fontFamily: 'Poppins-Bold',
     },
     productDistance: {
-        fontSize: RFValue(12),
+        fontSize: 13,
         color: '#666',
         fontFamily: 'Poppins-Regular',
         bottom: hp('3%'),

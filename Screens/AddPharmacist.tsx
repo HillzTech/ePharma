@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, Image, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, Image, TouchableOpacity, StyleSheet, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, collection, addDoc, doc, deleteDoc, getDocs, updateDoc } from 'firebase/firestore';
@@ -153,27 +153,28 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, padding: hp('2%'), backgroundColor: '#D3D3D3' }}>
-            <View style={{ top: hp('2%'), padding: hp('1%'), flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', right: hp('2%'), marginBottom: hp('3%') }}>
+        <SafeAreaView style={{ flex: 1, padding: hp('2%'), backgroundColor: '#D3D3D3',  }}>
+          <StatusBar backgroundColor="black" barStyle="light-content"/>
+            <View style={{ marginTop: Platform.OS === 'web'? 0: hp('-3%'), padding: hp('1%'), flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', right: wp('7%'), marginBottom: hp('3%') }}>
                 <TouchableOpacity onPress={handleBack}>
-                    <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+                    <Ionicons name="chevron-back" size={30} color="black" />
                 </TouchableOpacity>
                 <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(21), color: 'black' }}>Manage Pharmacists</Text>
             </View>
-
+            <View style={{ justifyContent: 'center', alignItems: 'center'  }}> 
             <TextInput
                 placeholder="Pharmacist Name"
                 value={name}
                 onChangeText={setName}
-                style={{ borderWidth: 1, marginBottom: hp('2%'), padding: hp('1%') }}
+                style={{ borderWidth: 1, marginBottom: hp('2%'), padding: hp('1%'), width: 320, borderRadius: 10}}
             />
 
             {/* Country Code and Phone Number Input */}
             <View style={{ flexDirection: 'row', marginBottom: hp('2%') }}>
-            <Text style={{ fontFamily: 'Poppins-Bold', left:wp('0.5%'), top:hp('1.7%'), fontSize:RFValue(15) }}>{countryCode}</Text> 
+            
                 <Picker
                     selectedValue={countryCode}
-                    style={{ height: hp('5%'), width: wp('10%') }}
+                    style={{ height: hp('5%'), width: 57}}
                     onValueChange={(itemValue: string) => setCountryCode(itemValue)}>
                     <Picker.Item label="+234 (Nigeria)" value="+234" />
                     <Picker.Item label="+1 (USA)" value="+1" />
@@ -186,7 +187,7 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
                     keyboardType="phone-pad"
-                    style={{ flex: 1, borderWidth: 1, paddingHorizontal: hp('1%'), right: hp('0.2%') }}
+                    style={{  borderWidth: 1, paddingHorizontal: hp('1%'), right: hp('0.2%'), width: 270, borderRadius:10 }}
                 />
             </View>
 
@@ -196,12 +197,12 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
         placeholder="Start Time (e.g., 11:30)"
         value={startTime}
         onChangeText={setStartTime}
-        style={{ flex: 1, borderWidth: 1, padding: hp('1%') }}
+        style={{  borderWidth: 1, padding: hp('1%'), width: 250, borderRadius:10 }}
     />
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Picker
             selectedValue={startTimePeriod}
-            style={{ width: wp('20%') }}
+            style={{ width: 40 }}
             onValueChange={(itemValue: string) => setStartTimePeriod(itemValue)}>
             <Picker.Item label="AM" value="AM" />
             <Picker.Item label="PM" value="PM" />
@@ -216,12 +217,12 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
         placeholder="End Time (e.g., 05:30)"
         value={endTime}
         onChangeText={setEndTime}
-        style={{ flex: 1, borderWidth: 1, padding: hp('1%') }}
+        style={{  borderWidth: 1, padding: hp('1%'),width: 250, borderRadius:10 }}
     />
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Picker
             selectedValue={endTimePeriod}
-            style={{ width: wp('20%') }}
+            style={{ width: 40 }}
             onValueChange={(itemValue: string) => setEndTimePeriod(itemValue)}>
             <Picker.Item label="AM" value="AM" />
             <Picker.Item label="PM" value="PM" />
@@ -234,7 +235,7 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
             {/* Day Picker for Start Day */}
             <Picker
                 selectedValue={startDay}
-                style={{ marginBottom: hp('0.5%'), borderWidth: 1 }}
+                style={{ marginBottom: hp('0.5%'), borderWidth: 1, width: 150, borderRadius:10 }}
                 onValueChange={(itemValue: string) => setStartDay(itemValue)}>
                 <Picker.Item label="Monday" value="Monday" />
                 <Picker.Item label="Tuesday" value="Tuesday" />
@@ -248,7 +249,7 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
             {/* Day Picker for End Day */}
             <Picker
                 selectedValue={endDay}
-                style={{ marginBottom: hp('2%'), borderWidth: 1 }}
+                style={{ marginBottom: hp('2%'), borderWidth: 1, width: 150, borderRadius:10 }}
                 onValueChange={(itemValue: string) => setEndDay(itemValue)}>
                 <Picker.Item label="Monday" value="Monday" />
                 <Picker.Item label="Tuesday" value="Tuesday" />
@@ -263,21 +264,25 @@ const AddPharmacist: React.FC<{ route: any, navigation: any }> = ({ route, navig
 
             {/* Image Picker */}
 
-            <View style={{  marginBottom: hp('2%') }} >
+            <View style={{  marginBottom: hp('2%'), width: 200, borderRadius:10 }} >
             <Button title="Pick Image"  onPress={handleImagePicker} />
 
             </View>
 
-            {imageUri && <Image source={{ uri: imageUri }} style={{ width: wp('50%'), height: hp('20%'), marginTop: hp('2%'), marginBottom: hp('2%') }} />}
-
+            {imageUri && <Image source={{ uri: imageUri }} style={{ width: 100, height: 100, marginTop: hp('2%'), marginBottom: hp('2%') }} />}
+             
+            <View style={{  marginBottom: hp('2%'), width: 200, borderRadius:10 }} >
             <Button title={editingPharmacist ? "Update Pharmacist" : "Add Pharmacist"} onPress={handleAddOrUpdatePharmacist} />
+            </View>
+
+            </View> 
 
             <FlatList
     data={pharmacists}
     renderItem={({ item }) => (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: hp('2%') }}>
             {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={{ width: wp('20%'), height: hp('10%') }} />
+                <Image source={{ uri: item.imageUrl }} style={{ width: 70, height: 70 }} />
             ) : (
                 <View style={{ width: wp('20%'), height: hp('10%'), backgroundColor: '#D3D3D3' }} />
             )}

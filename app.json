@@ -2,8 +2,12 @@
   "expo": {
     "name": "ePharma",
     "slug": "ePharma",
-    "platforms": ["android", "ios", "web"],
-    "version": "1.0.0",
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/Logo.png",
     "userInterfaceStyle": "light",
@@ -14,7 +18,8 @@
     },
     "plugins": [
       "@react-native-google-signin/google-signin",
-      "expo-font"
+      "expo-font",
+      "expo-router"
     ],
     "ios": {
       "supportsTablet": true
@@ -34,5 +39,6 @@
         "projectId": "f83ca6c1-e857-44d1-8a0b-24bef356d63f"
       }
     }
+    
   }
 }

@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {
   View, Text, TouchableOpacity, Dimensions, TextInput, StyleSheet,
-  FlatList, Image, SafeAreaView
+  FlatList, Image, SafeAreaView,
+  Platform,
+  BackHandler,
+  StatusBar
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 import {
@@ -37,6 +40,9 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
   const [selectedTag, setSelectedTag] = useState<string>('All');
   const [showOptions, setShowOptions] = useState<string | null>(null);
   const { pharmacyName, fetchPharmacyName } = usePharmacy();
+  const windowHeight = Dimensions.get('window').height;
+  const windowWidth = Dimensions.get('window').width;
+
 
   useEffect(() => {
     const currentUser = firebase.auth().currentUser;
@@ -113,6 +119,17 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
     // Deletion code
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
   const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.productContainer}>
       <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
@@ -124,7 +141,7 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
         style={styles.optionsButton}
         onPress={() => setShowOptions(item.id)}
       >
-        <Ionicons name="ellipsis-vertical" size={RFValue(20)} color="black" />
+        <Ionicons name="ellipsis-vertical" size={20} color="black" />
       </TouchableOpacity>
       {showOptions === item.id && (
         <View style={styles.optionsMenu}>
@@ -142,9 +159,10 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#D3D3D3' }}>
       {isLoading && <LoadingOverlay />}
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: wp('1%'), left: wp('3%'), marginTop: hp('4.5%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', padding: wp('1%'), left: wp('3%'), marginTop: Platform.OS === 'web' ? 1: hp('0.5%') }}>
         <TouchableOpacity onPress={() => navigation.navigate('RetailerScreen')}>
-          <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+          <Ionicons name="chevron-back" size={30} color="black" />
         </TouchableOpacity>
         {user && (
           <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(18), left: wp('5%') }}>{pharmacyName || user?.username}</Text>
@@ -174,8 +192,11 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
         </View>
       </View>
 
-      
-      <FlatList
+
+
+
+      {windowWidth  < 1000 ? (
+        <FlatList
         data={filteredProducts}
         keyExtractor={(item) => item.id}
         renderItem={renderProduct}
@@ -187,13 +208,40 @@ const InventoryScreen: React.FC<{ navigation: any, route: any }> = ({ navigation
       />
       
 
-      <View style={{bottom:hp('76%')}}>
+   ) : (
+
+    <FlatList
+    data={filteredProducts}
+    keyExtractor={(item) => item.id}
+    renderItem={renderProduct}
+    numColumns={4}
+    key={4}
+    columnWrapperStyle={styles.columnWrapper}
+    contentContainerStyle={styles.productsContainer}
+    showsVerticalScrollIndicator={false}
+  />
+  
+   )}
+      
+      
+
+      {Platform.OS === 'web'? (
+        <>
+          
+        </>
+      ) : (
+        <>
+       <View style={{bottom:hp('76%')}}>
       <RetailFooter route={route} navigation={navigation}/>
       <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
               <></>
           </View>
 
             </View>
+
+        
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -234,7 +282,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#007BFF',
     },
     tagText: {
-        fontSize: RFValue(14),
+        fontSize: 15,
         color: '#000',
         fontFamily: 'Poppins-Bold',
     },
@@ -249,14 +297,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 10,
         marginBottom: hp('2%'),
-        width: wp('42%'),
+        width: RFValue(142),
         paddingHorizontal: wp('2%'),
         paddingVertical: wp('0.5%'),
         position: 'relative',
     },
     productImage: {
-        width: wp('42%'),
-        height: hp('15%'),
+        width: 151,
+        height: 120,
         borderTopRightRadius: 10,
         borderTopLeftRadius: 10,
         resizeMode: 'cover',
@@ -268,11 +316,11 @@ const styles = StyleSheet.create({
     },
     productTitle: {
         fontFamily: 'Poppins-Bold',
-        fontSize: RFValue(16),
+        fontSize: 17,
     },
     productPrice: {
         fontFamily: 'Poppins-Regular',
-        fontSize: RFValue(14),
+        fontSize: 15,
         color: '#007BFF',
     },
     optionsButton: {

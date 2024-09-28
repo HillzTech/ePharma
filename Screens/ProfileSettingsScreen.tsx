@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Switch } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Switch, BackHandler, StatusBar } from 'react-native';
 import { getAuth, updatePassword, updateEmail, deleteUser } from 'firebase/auth';
 import { getFirestore, doc, deleteDoc } from 'firebase/firestore';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -85,6 +85,17 @@ const ProfileSettingsScreen = () => {
     navigation.goBack();
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
   const toggleNotifications = () => {
     setIsNotificationsEnabled(previousState => !previousState);
     Alert.alert('Notification Status', `Notifications have been turned ${isNotificationsEnabled ? 'off' : 'on'}.`);
@@ -92,15 +103,20 @@ const ProfileSettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+
       <View style={{}}>
         <View style={{flexDirection: 'row', justifyContent: "space-around", alignItems: 'center', gap: wp('1%'),  marginBottom: hp('2%'),  right: wp('12%')}}>
           <TouchableOpacity onPress={handleBack}>
-            <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+            <Ionicons name="chevron-back" size={30} color="black" />
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
         </View>
       </View>
 
+
+
+      <View style={{justifyContent: 'center', alignItems: 'center',}}>
       {/* Notification Toggle */}
       <View style={styles.notificationToggle}>
         <Text style={styles.notificationText}>Enable Notifications</Text>
@@ -144,6 +160,8 @@ const ProfileSettingsScreen = () => {
         <Text style={styles.buttonText}>DELETE ACCOUNT</Text>
       </TouchableOpacity>
 
+      </View>
+
     </SafeAreaView>
   );
 };
@@ -151,18 +169,18 @@ const ProfileSettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: wp('4%'),
+    padding: wp('2%'),
     backgroundColor:'#D3D3D3'
   },
   title: {
     fontSize: RFValue(19),
-    marginBottom: hp('3%'),
-    marginTop: hp('3%'),
+    marginTop: 0,
     textAlign: 'center',
     fontFamily: 'Poppins-Bold',
     right: wp('12%'),
   },
   input: {
+    width: 330,
     height: hp('6%'),
     borderColor: '#ccc',
     borderRadius: 4,
@@ -171,42 +189,43 @@ const styles = StyleSheet.create({
     backgroundColor:'white'
   },
   button: {
+    
     backgroundColor: 'blue',
-    padding: wp('3%'),
+    padding: 10,
     borderRadius: 10,
-    width: wp('92%'),
+    width: 330,
     marginBottom: hp('4%'),
   },
   buttonText: {
     textAlign: 'center',
     color: 'white',
     fontFamily: 'Poppins-Bold',
-    fontSize: RFValue(15),
+    fontSize: 16,
   },
   notificationToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: hp('4%'),
-    paddingHorizontal: wp('2%'),
+    gap: 70,
   },
   notificationText: {
-    fontSize: RFValue(16),
+    fontSize: 17,
     fontFamily: 'Poppins-Bold',
   },
   deleteText: {
     textAlign: 'center',
     color: 'black',
     fontFamily: 'Poppins-Bold',
-    fontSize: RFValue(15),
+    fontSize: 16,
     marginTop: hp('4%'),
   },
   deleteButton: {
     backgroundColor: 'red',
-    padding: wp('3%'),
+    padding: 10,
     borderRadius: 10,
-    width: wp('92%'),
     marginBottom: hp('4%'),
+    width: 330,
   },
 });
 

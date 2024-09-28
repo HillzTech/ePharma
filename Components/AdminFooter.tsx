@@ -44,14 +44,14 @@ const AdminFooter: React.FC<{ route: any, navigation: any }> = ({ route, navigat
   };
 
   return (
-    <><TouchableOpacity onPress={() => handleIconPress('search', 'AdminPayments')} style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('94%'), right: wp('1.5%'), left: 0, zIndex: 10 }}>
+    <><TouchableOpacity onPress={() => handleIconPress('search', 'AdminPayments')} style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('90%'), right: wp('1.5%'), left: 0, zIndex: 10 }}>
           <ImageBackground source={require('../assets/dollar.png')} style={{ width: wp('19%'), height: wp('15%') }} />
       </TouchableOpacity><View style={{
           position: 'absolute', // Fixes the position relative to the screen
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          top: hp('98.5%'), // Position from the top of the screen
+          top: hp('93.5%'), // Position from the top of the screen
           left: 0,
           right: 0,
           paddingHorizontal: wp('5%'),
@@ -60,7 +60,7 @@ const AdminFooter: React.FC<{ route: any, navigation: any }> = ({ route, navigat
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: wp('6%') }}>
                   <TouchableOpacity onPress={() => handleIconPress('home', 'AdminDashboard')}>
                       <Ionicons name='home' size={iconSize} style={{ left: wp('1.5%') }} color={selectedIcon === 'home' ? 'blue' : 'white'} />
-                      <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey' }}>Revenue</Text>
+                      <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(9), color: 'grey' }}>Home</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => handleIconPress('help', 'AllOrder')} style={{ left: wp('1.5%') }}>

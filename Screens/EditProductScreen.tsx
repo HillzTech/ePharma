@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, Image, Button, Alert, TouchableOpacity, SafeAreaView } from "react-native";
+import { View, Text, TextInput, StyleSheet, Image, Button, Alert, TouchableOpacity, SafeAreaView, ScrollView, BackHandler, Platform, StatusBar } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { db } from "../Components/firebaseConfig";
@@ -175,12 +175,26 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
         return <View style={{ flex: 1 }}><LoadingOverlay /></View>;
     }
 
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+          navigation.goBack();
+          return true;
+        });
+      
+        return () => {
+          backHandler.remove();
+        };
+      }, [navigation]);
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#D3D3D3' }}>
             {isLoading && <LoadingOverlay />}
+            <StatusBar backgroundColor="black" barStyle="light-content"/>
+            <ScrollView showsVerticalScrollIndicator={ false}>
             <View style={styles.container}>
                 <Text style={styles.title}>Edit Product</Text>
-
+                <View style={{justifyContent: 'center', alignItems: 'center',}}>
+                
                 <View style={styles.fieldContainer}>
                     <Text style={styles.label}>Title*</Text>
                     <TextInput
@@ -223,6 +237,7 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
                     />
                 </View>
                  
+                
 
              <View style={{flexDirection:'row', alignItems:'center', marginTop:hp('2%'), marginBottom:hp('20%'), paddingRight:wp('25%')}}>
 
@@ -267,17 +282,19 @@ const EditProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
                         textAlign: 'center',
                         bottom: hp('12%'),
                         backgroundColor: 'blue',
-                        width: wp('80%'),
-                        padding: wp('3.5%'),
+                        width: 310,
+                        padding: 12,
                         borderRadius: 6,
                         color: 'white',
                         fontFamily: 'Poppins-Bold',
-                        left: wp('6%')
+                        
                     }}>
                         Save
                     </Text>
                 </TouchableOpacity>
             </View>
+            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -286,7 +303,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: wp('4%'),
-        marginTop: hp('6%'),
+        marginTop:  Platform.OS === 'web' ? 1: hp('3%'),
+       
     },
     title: {
         fontSize: RFValue(24),
@@ -297,11 +315,12 @@ const styles = StyleSheet.create({
         marginBottom: hp('2%'),
     },
     label: {
-        fontSize: RFValue(16),
+        fontSize: 17,
         fontWeight: 'bold',
         marginBottom: hp('1%'),
     },
     input: {
+        width: 320,
         height: hp('6%'),
         borderColor: 'grey',
         borderWidth: 1,
@@ -316,18 +335,18 @@ const styles = StyleSheet.create({
         margin: wp('1%'),
     },
     image: {
-        width: wp('25%'),
-        height: hp('11%'),
+        width: 100,
+        height: 100,
         borderRadius: 8,
     },
     imagePicker: {
         paddingVertical: hp('3%'),
-        width: wp('24%'),
-        height: wp('24%'),
+        width: 100,
+        height: 100,
         backgroundColor: '#272727',
         borderRadius: 9,
         alignItems: 'center',
-    
+        marginLeft: 80,
     },
     deleteButton: {
         position: 'absolute',

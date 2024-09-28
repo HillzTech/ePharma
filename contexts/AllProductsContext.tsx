@@ -2,8 +2,6 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../Components/firebaseConfig';
-import haversine from 'haversine-distance';
-import GetLocation from 'react-native-get-location';
 
 interface Product {
   uploadedAt: any;
@@ -14,8 +12,6 @@ interface Product {
   percentageDiscount: number;
   imageUrls: string[];
   tags: string[];
-  location: { latitude: number; longitude: number };
-  distance: number;
   userId: string;
   pharmacyName: string;
 }
@@ -35,20 +31,7 @@ export const AllProductsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserLocation = async () => {
-      try {
-        const location = await GetLocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 15000,
-        });
-        return location;
-      } catch (error) {
-        console.error('Error fetching user location:', error);
-        return null;
-      }
-    };
-
-    const fetchAllProducts = async (userLocation: any) => {
+    const fetchAllProducts = async () => {
       try {
         const categoriesRef = collection(db, 'categories');
         const categoriesSnapshot = await getDocs(categoriesRef);
@@ -68,26 +51,13 @@ export const AllProductsProvider: React.FC<{ children: React.ReactNode }> = ({ c
               percentageDiscount: data.percentageDiscount || 0,
               imageUrls: data.imageUrls || [],
               tags: data.tags || [],
-              location: data.location || { latitude: 0, longitude: 0 },
-              distance: 0,
               userId: data.userId,
               pharmacyName: data.pharmacyName || '',
               uploadedAt: data.uploadedAt || '',
             };
           });
 
-          // Calculate distance for each product
-          const productsWithDistance = productsList.map(product => {
-            const distanceInMiles = userLocation
-              ? haversine(
-                  { latitude: userLocation.latitude, longitude: userLocation.longitude },
-                  product.location
-                ) / 1609.34
-              : 0;
-            return { ...product, distance: Math.round(distanceInMiles) };
-          });
-
-          allProducts.push(...productsWithDistance);
+          allProducts.push(...productsList);
         }
 
         setProducts(allProducts);
@@ -98,12 +68,7 @@ export const AllProductsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
     };
 
-    const initializeProducts = async () => {
-      const userLocation = await fetchUserLocation();
-      fetchAllProducts(userLocation);
-    };
-
-    initializeProducts();
+    fetchAllProducts();
   }, []);
 
   return (

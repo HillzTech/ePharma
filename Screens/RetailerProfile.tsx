@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, Dimensions, TextInput, FlatList, Button, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, Dimensions, TextInput, FlatList, Button, ImageBackground, Platform, BackHandler, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/storage';
@@ -41,7 +41,8 @@ const RetailerProfile: React.FC<{ route: any, navigation: any }> = ({ route, nav
   const [isLoading, setLoading] = useState(false);
   const { avatar, setAvatar } = useAvatar();
   const { pharmacyName, fetchPharmacyName } = usePharmacy();
-
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
   
   
   useEffect(() => {
@@ -183,6 +184,17 @@ const handleback = async() => {
   navigation.navigate('RetailerScreen')
 }
 
+useEffect(() => {
+  const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+    navigation.goBack();
+    return true;
+  });
+
+  return () => {
+    backHandler.remove();
+  };
+}, [navigation]);
+
 const handleLogOut = async ()=>{
     await logout();
     navigation.navigate('LoginScreen');
@@ -206,7 +218,9 @@ const handleLogOut = async ()=>{
   return (
     <SafeAreaView style={styles.container}>
         {isLoading && <LoadingOverlay />}
-   <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('5%'), top:hp('3%')}}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+        
+   <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('5%'), top:Platform.OS === 'web' ? 0:hp('3%'),marginTop:Platform.OS === 'web' ? -7:  hp('-4%')}}>
     <TouchableOpacity  onPress={handleback}>
     <Ionicons name="chevron-back" size={29} color="black" />
     </TouchableOpacity>
@@ -215,38 +229,44 @@ const handleLogOut = async ()=>{
    </View>
 
 
-      <View style={{marginTop:hp('1%'), flexDirection:'row', alignItems:'center', justifyContent:'flex-start',paddingHorizontal:wp('6%')}}>
+      <View style={{marginTop:windowWidth > 1000 ? hp('-9%') : hp('1%'), flexDirection:'row', alignItems:'center', justifyContent:'flex-start',paddingHorizontal:wp('6%')}}>
          <TouchableOpacity onPress={handleAvatarChange}  style={{left:wp('1%'), top:hp('1%')}}>
             <Image
               source={avatar ? { uri: avatar } : require('../assets/avatar.png')}
               style={styles.avatar}
             />
-            <Ionicons name='camera' size={23} color={'white'} style={{bottom:hp('3.5%'), left:wp('10%')}}/>
+            <Ionicons name='camera' size={23} color={'white'} style={{bottom:hp('3.5%'), left:windowWidth > 1000 ? wp('3%') : wp('10%')}}/>
             
             
           </TouchableOpacity>
          
-          {user && (
-        <View style={{paddingHorizontal:wp('6%'), flexDirection:'column',justifyContent:'center'}}>
-          <Text style={styles.username}> {pharmacyName || user?.username}</Text>
-          <Text style={{fontFamily:'Poppins-Regular', bottom:hp('1%'), fontSize:RFValue(9), left: wp('2%')}}>{user.email}
-          </Text>
-          
-        </View>
-      )}
+         
+
+{user ? (
+    // Show username and email if user is signed in
+    <View style={{paddingHorizontal: wp('6%'), flexDirection:'column',justifyContent:'center'}}>
+      <Text style={styles.username}>{pharmacyName || user?.username}</Text>
+      <Text style={{fontFamily: 'Poppins-Regular', bottom: hp('1%'), fontSize: 10}}>{user.email}</Text>
+    </View>
+  ) : (
+    // Show login button if user is not signed in
+    <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')} style={{ right: 10}}>
+      <Text style={{ fontFamily: 'Poppins-Regular', fontSize: 13 }}>Login</Text>
+    </TouchableOpacity>
+  )}
 
           
 
       </View>
 
-      <View style={{flexDirection:'column', margin:hp('1%'), gap: hp('1%')}}>
+      <View style={{flexDirection:'row', margin:hp('1%'), gap: windowWidth > 1000 ? hp('2%') : hp('1%'), justifyContent:'space-around', alignItems:'center', flexWrap: 'wrap', marginTop:windowWidth > 1000 ? hp('7%') : hp('0%')}}>
      
         
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',  borderRadius:10,  marginBottom:hp('0.5%')}} onPress={handleInfo}>
+        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',  borderRadius:10,  marginBottom:hp('0.5%'), width: 340}} onPress={handleInfo}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Pharamacy Details</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Edit your pharmacy information</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Edit your pharmacy information</Text>
           </View>
 
 
@@ -259,11 +279,11 @@ const handleLogOut = async ()=>{
 
        
 
-        <TouchableOpacity onPress={handleBulkProducts}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
+        <TouchableOpacity onPress={handleBulkProducts}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%'), width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Source for Drugs</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10),  opacity:0.6}}>Buy from wholesalers</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11,  opacity:0.6}}>Buy from wholesalers</Text>
           </View>
 
 
@@ -274,11 +294,11 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleWithdrawal}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
+        <TouchableOpacity onPress={handleWithdrawal}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%'), width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Withdraw Funds</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Visa **34</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Visa **34</Text>
           </View>
 
 
@@ -289,11 +309,11 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleComplaints}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
+        <TouchableOpacity onPress={handleComplaints}  style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%'), width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Customer Support</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Direct Complaints</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Direct Complaints</Text>
           </View>
 
 
@@ -306,11 +326,11 @@ const handleLogOut = async ()=>{
 
         
 
-        <TouchableOpacity onPress={handleSettings} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}}>
+        <TouchableOpacity onPress={handleSettings} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%'), width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Settings</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Notifications, password</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Notifications, password</Text>
           </View>
 
 
@@ -321,11 +341,11 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleFAQ} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleFAQ} style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10, width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>FAQ</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Frequently asked Questions</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Frequently asked Questions</Text>
           </View>
 
 
@@ -336,7 +356,9 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
-        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%')}} onPress={handleLogOut}>
+
+        {user ? (
+        <TouchableOpacity style={{ padding:wp('3%'), backgroundColor:'#FAF9F6',borderRadius:10,  marginBottom:hp('0.5%'), width: 340}} onPress={handleLogOut}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Logout</Text>
@@ -351,17 +373,30 @@ const handleLogOut = async ()=>{
         
         </TouchableOpacity>
 
+           ) : (
+            <></>
+          )}
        
         
       </View>
 
-      <View style={{bottom:hp('61%')}}>
+      {Platform.OS === 'web'? (
+        <>
+          
+        </>
+      ) : (
+        <>
+       <View style={{bottom:hp('68%')}}>
       <RetailFooter route={route} navigation={navigation}/>
       <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
               <></>
           </View>
 
             </View>
+
+        
+        </>
+      )}
       
 
     </SafeAreaView>
@@ -379,8 +414,8 @@ const styles = StyleSheet.create({
     
   },
   avatar: {
-    width: wp('18%'),
-    height: hp('8%'),
+    width: 60,
+    height: 60,
     borderRadius: RFValue(50),
 
   },
@@ -437,9 +472,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    fontSize: RFValue(17),
+    fontSize: 18,
     fontFamily: 'OpenSans-Bold',
-    
+    marginBottom: 7,
   },
 });
 

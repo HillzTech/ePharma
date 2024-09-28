@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Alert, Dimensions, StatusBar } from 'react-native';
 import { ref, set, onValue, remove, get } from 'firebase/database';
 import { auth, realtimeDb } from "../Components/firebaseConfig";
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -12,6 +12,9 @@ const SupportScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
   const user = auth.currentUser;
   const adminUserId = "VdsO9TWkJlS9ItoohfAATFd0wPB3"; 
   const welcomeMessage = "Hello! How can I assist you today?";
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
+  
 
   useEffect(() => {
     if (user?.uid) {
@@ -116,11 +119,13 @@ const SupportScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
 
   return (
     <SafeAreaView style={{ flex: 1, padding: hp('2%'), backgroundColor:'#D3D3D3' }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: wp('7%'), right: hp('1%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+       
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: windowWidth > 1000 ? hp('2%') : wp('0%'), right: hp('1%') }}>
         
         <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(19), left: wp('33%') }}>Support</Text>
         <TouchableOpacity onPress={endConversation} style={{ padding: 10, backgroundColor: 'red', borderRadius: 10 }}>
-          <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(12), color: 'white' }}>End Chat</Text>
+          <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: 13, color: 'white' }}>End Chat</Text>
         </TouchableOpacity>
       </View>
 
@@ -145,14 +150,14 @@ const SupportScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
       />
       <View style={{ flexDirection: 'row', marginVertical: hp('2%') }}>
         <TextInput
-          style={{ flex: 1, backgroundColor: 'white', borderRadius: 10, height: wp('25%'), padding: wp('2%') }}
+          style={{ flex: 1, backgroundColor: 'white', borderRadius: 10, height: windowWidth > 1000 ? hp('10%') : wp('25%'), padding: wp('2%') }}
           placeholder="Type your message..."
           value={message}
           onChangeText={setMessage}
           multiline={true}
         />
         <TouchableOpacity onPress={sendMessage} style={{ marginLeft: hp('1%'), justifyContent: 'center', padding: hp('1%'), borderRadius: 10 }}>
-          <Ionicons name='send' color={'blue'} size={RFValue(30)} />
+          <Ionicons name='send' color={'blue'} size={30} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

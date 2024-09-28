@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, FlatList, Dimensions, BackHandler, Platform, StatusBar } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../Components/firebaseConfig';
 import haversine from 'haversine-distance';
@@ -7,7 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import CostumerFooter from '../Components/CostumerFooter'; // Adjust path as needed
-import GetLocation from 'react-native-get-location';
+import Geolocation from '@react-native-community/geolocation';
+
 import { Ionicons } from '@expo/vector-icons';
 import LoadingOverlay from '../Components/LoadingOverlay';
 
@@ -27,6 +28,8 @@ interface Pharmacy {
     const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
     const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [isLoading, setLoading] = useState(false);
+    const windowWidth = Dimensions.get('window').width;
+    const windowHeight = Dimensions.get('window').height;
     
   
     useEffect(() => {
@@ -92,29 +95,35 @@ interface Pharmacy {
   
     // Fetch user location (you can replace this with your own method)
     useEffect(() => {
-      const getUserLocation = async () => {
-        try {
-          // Replace with your method to get user location
-          const location = await GetLocation.getCurrentPosition({
-            enableHighAccuracy: true,
-            timeout: 15000,
-          });
-  
+      Geolocation.getCurrentPosition(
+        position => {
           setUserLocation({
-            latitude: location.latitude,
-            longitude: location.longitude,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
           });
-        } catch (error) {
+        },
+        error => {
           console.error('Error getting user location:', error);
-        }
-      };
-  
-      getUserLocation();
+        },
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
     }, []);
+    
 
     const handleBack = () => {
       navigation.navigate('HomeScreen');
   };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
   
     const handlePress = (pharmacyId: string) => {
       navigation.navigate('PharmacyDetailsScreen', { pharmacyId });
@@ -137,13 +146,17 @@ interface Pharmacy {
     return (
       <SafeAreaView style={styles.container}>
          {isLoading && <LoadingOverlay />}
-         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginTop: hp('5%'), right: wp('5%'), marginBottom: hp('2%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+
+         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginTop: Platform.OS === 'web' ? 0:  hp('0.5%'), right: Platform.OS === 'web' ? wp('5%'):  wp('12%'), marginBottom: hp('2%') }}>
          <TouchableOpacity onPress={handleBack} >
-          <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+          <Ionicons name="chevron-back" size={30} color="black" />
           </TouchableOpacity>
           <Text style={{textAlign:'center', fontFamily:'Poppins-Bold', fontSize:RFValue(18), right: wp('15%')}}>Pharmacies</Text>
         </View>
 
+
+        {windowWidth  < 1000 ? (
         <View style={{ padding: wp('0%') }}>
         <FlatList
           data={pharmacies}
@@ -155,6 +168,22 @@ interface Pharmacy {
           showsVerticalScrollIndicator={true}
         />
          </View>
+
+     ) : (
+      <View style={{ padding: wp('0%'), justifyContent: 'center', alignItems: 'center', }}>
+      <FlatList
+        data={pharmacies}
+        renderItem={renderPharmacyItem}
+        keyExtractor={(item) => item.id}
+        key={4}
+        numColumns={4} // Display two items in a row
+        columnWrapperStyle={styles.columnWrapper}
+        contentContainerStyle={styles.pharmaciesContainer}
+        showsVerticalScrollIndicator={true}
+      />
+       </View>
+
+     )}
         
       </SafeAreaView>
     );
@@ -176,8 +205,8 @@ interface Pharmacy {
         borderRadius:10
     },
     pharmacyImage: {
-        width: wp('45%'),
-        height: hp('15%'),
+        width: RFValue(150),
+        height: RFValue(120),
         borderTopLeftRadius:10,
         borderTopRightRadius:10,
         borderColor:'white',
@@ -187,15 +216,15 @@ interface Pharmacy {
       
     },
     pharmacyName: {
-      fontSize: RFValue(14),
+      fontSize: 15,
       fontWeight: 'bold',
       color:'black'
     },
     pharmacyDistance: {
-      fontSize: RFValue(13),
+      fontSize: 14,
     },
     pharmacyAddress: {
-      fontSize: RFValue(12),
+      fontSize: 13,
       color: 'gray',
     },
     columnWrapper: {

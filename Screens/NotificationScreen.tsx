@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, Platform, BackHandler, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import firebase from 'firebase/compat';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -11,6 +11,8 @@ const NotificationScreen: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<any>();
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
   useEffect(() => {
     const currentUser = firebase.auth().currentUser;
@@ -58,12 +60,24 @@ const NotificationScreen: React.FC = () => {
     markAsRead(messageId);
     // Navigate or perform other actions as needed
   };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
  
 
   return (
     <View style={styles.container}>
       {loading && <LoadingOverlay />}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: wp('1%'), top: hp('3%') , marginBottom: hp('6%')}}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/> 
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: wp('1%'), top:  Platform.OS === 'web' ? -6:  0 , marginBottom: hp('4%')}}>
         <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
           <Ionicons name="chevron-back" size={29} color="black" />
         </TouchableOpacity>
@@ -98,6 +112,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: wp('5%'),
     backgroundColor: '#F5F5F5',
+    overflow: Platform.OS === 'web' ? 'scroll' : 'visible'
   },
   messageContainer: {
     paddingHorizontal: wp('7%'),

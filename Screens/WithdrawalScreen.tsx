@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, SafeAreaView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, SafeAreaView, StyleSheet, Dimensions, BackHandler, StatusBar } from 'react-native';
 import { useAuth } from '../contexts/authContext';
 import { db } from '../Components/firebaseConfig';
 import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
@@ -19,6 +19,10 @@ const WithdrawalScreen: React.FC<{ route: any, navigation: any }> = ({ route, na
   const [withdrawAmount, setWithdrawAmount] = useState<number>(0);
   const [pharmacyName, setPharmacyName] = useState<string>('');
   const [pharmacyPhone, setPharmacyPhone] = useState<string>('');
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
+  
+  
 
   const banks = [
     "Access Bank",
@@ -150,17 +154,33 @@ const WithdrawalScreen: React.FC<{ route: any, navigation: any }> = ({ route, na
     navigation.navigate('RetailerProfile');
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={handleBack}>
           <Ionicons name="chevron-back" size={29} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Withdrawal</Text>
+        <Text style={windowWidth > 1000 ? styles.lgheaderText: styles.headerText}>Withdrawal</Text>
       </View>
-
+      
+      <View style={{justifyContent: 'center', alignItems: 'center',}}>
       <Text style={styles.label}>Total Revenue: N{totalRevenue}</Text>
-
+   
+      
+      
       <TextInput
         style={styles.input}
         placeholder="Account Name"
@@ -210,6 +230,8 @@ const WithdrawalScreen: React.FC<{ route: any, navigation: any }> = ({ route, na
       <TouchableOpacity style={styles.button} onPress={handleWithdraw}>
         <Text style={styles.buttonText}>Withdraw</Text>
       </TouchableOpacity>
+
+      </View>
     </SafeAreaView>
   );
 };
@@ -218,7 +240,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f7f7',
-    padding: 28,
+    padding: 17,
+    
+    
   },
   headerContainer: {
     flexDirection: 'row',
@@ -226,12 +250,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: wp('1%'),
     marginBottom: hp('4%'),
-    marginTop: hp('1%'),
+    
   },
   headerText: {
     fontFamily: 'OpenSans-Bold',
     fontSize: RFValue(18),
     right: wp('27%'),
+  },
+  lgheaderText: {
+    fontFamily: 'OpenSans-Bold',
+    fontSize: RFValue(18),
+    right: wp('57%'),
   },
   label: {
     fontSize: 18,
@@ -239,6 +268,7 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   input: {
+    width: 300,
     height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
@@ -247,12 +277,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     backgroundColor: '#fff',
+     justifyContent: 'center',
+    alignItems: 'center',
   },
   button: {
     backgroundColor: '#4CAF50',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
+    width: 300,
   },
   buttonText: {
     color: '#fff',

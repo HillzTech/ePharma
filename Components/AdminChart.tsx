@@ -2,7 +2,7 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { BarChart } from 'react-native-chart-kit';
 import { db } from './firebaseConfig'; // Ensure this path is correct
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Picker } from '@react-native-picker/picker';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -14,7 +14,8 @@ const fullMonthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
-
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 const monthAbbreviations = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
 // Dynamically generate years from 2021 to the current year + 5
@@ -107,7 +108,7 @@ const AdminChart = () => {
                   text={` #${totalRevenue.toFixed(2)}`}
                   strokeColor="white"
                   strokeWidth={3}
-                  fontSize={RFValue(14)}
+                  fontSize={15}
                 />
               </View>
             </View>
@@ -131,8 +132,8 @@ const AdminChart = () => {
           <View style={styles.chartContainer}>
             <BarChart
               data={chartData}
-              width={wp('97%')} // Adjust the width as needed
-              height={hp('30%')}
+              width={windowWidth > 1000 ? wp('50%') : wp('97%')} // Adjust the width as needed
+              height={windowWidth > 1000 ? hp('50%') : hp('30%')}
               yAxisLabel="#"
               yAxisSuffix="k"
               chartConfig={{
@@ -181,6 +182,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center', // Center the chart horizontally
     paddingHorizontal: 5,
+    left:windowWidth > 700 ? wp('20%') : wp('0%')
   },
   headerContainer: {
     flexDirection: 'column',
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
   headerText: {
     color: 'grey',
     fontFamily: 'OpenSans-Bold',
-    fontSize: RFValue(10),
+    fontSize: 11,
     marginRight: wp('0.2%'),
   },
   tooltip: {
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
   },
   tooltipText: {
     color: 'white',
-    fontSize: RFValue(12),
+    fontSize: 13,
   },
   totalRevenueContainer: {
     bottom: hp('0.3'),

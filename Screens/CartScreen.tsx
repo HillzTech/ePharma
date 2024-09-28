@@ -1,6 +1,6 @@
 // CartScreen.tsx
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet, Image, SafeAreaView } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet, Image, SafeAreaView, Dimensions, BackHandler, Platform, StatusBar } from 'react-native';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/authContext';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +14,8 @@ const CartScreen: React.FC = () => {
   const { cart, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = useCart();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
   const handleCheckout = () => {
     if (!user) {
@@ -64,6 +66,18 @@ const CartScreen: React.FC = () => {
     
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
+
   const renderItem = ({ item }: { item: Product }) => {
     const imageUri = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : 'https://via.placeholder.com/80';
     const quantity = item.quantity || 1;
@@ -96,29 +110,38 @@ const CartScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: hp('2.5%'), marginBottom: wp('5%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop:  Platform.OS === 'web' ? 1: -12, marginBottom: wp('5%') }}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+          <Ionicons name="chevron-back" size={31} color="black" />
         </TouchableOpacity>
         <Text style={{ fontSize: RFValue(19), fontFamily: 'Poppins-Bold', textAlign: 'center', color: 'black', right: wp('35%') }}> My Cart</Text>
       </View>
 
+       
       {cart.length > 0 ? (
         <><FlatList<Product>
           data={cart}
           renderItem={renderItem}
+
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.cartList} /><View style={styles.totalContainer}>
             <Text style={styles.totalText}>Total Price: N{totalPrice.toFixed(2)}</Text>
+            {user ? (
             <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
               <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
             </TouchableOpacity>
+             ) : (
+              <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')} style={styles.checkoutButton}>
+              <Text style={styles.checkoutButtonText }>Login</Text>
+            </TouchableOpacity>
+            )}
           </View></>
       ) : (
         <>
-        <EvilIcons name="cart" size={340} color="grey" style={{marginTop:hp('19%')}}/>
+        <EvilIcons name="cart" size={340} color="grey" style={{marginTop: windowWidth > 1000 ? 30 : hp('19%'),left: windowWidth > 1000 ? 320 : 0}}/>
         <Text style={styles.emptyCartText}>Whoosp</Text>
-        <Text style={{fontFamily:'Poppins-Bold', textAlign:"center", fontSize:RFValue(15), color:'grey',top:hp('9%') }}>Your cart is empty</Text>
+        <Text style={{fontFamily:'Poppins-Bold', textAlign:"center", fontSize:16, color:'grey',top:hp('9%') }}>Your cart is empty</Text>
         </>
       )}
 
@@ -135,6 +158,7 @@ const styles = StyleSheet.create({
   },
   cartList: {
     paddingBottom: hp('10%'),
+    
   },
   cartItem: {
     flexDirection: 'row',
@@ -145,25 +169,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cartItemImage: {
-    width: wp('30%'),
-    height: hp('20%'),
+    width: 100,
+    height: 150,
     borderRadius: 5,
   },
   cartItemDetails: {
-    marginLeft: wp('6%'),
+    marginLeft: 20,
     flex: 1,
   },
   cartItemTitle: {
-    fontSize: RFValue(15),
+    fontSize: 16,
     fontFamily: 'Poppins-Bold',
   },
   cartItemQuantity: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     color: 'gray',
     fontFamily: 'Poppins-Regular',
   },
   cartItemPrice: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     color: 'black',
     fontFamily: 'Poppins-Bold',
   },
@@ -181,12 +205,12 @@ const styles = StyleSheet.create({
      backgroundColor: 'white',
   },
   quantityButtonText: {
-    fontSize: RFValue(15),
+    fontSize: 16,
     fontFamily: 'Poppins-Bold',
   },
   quantityText: {
     marginHorizontal: hp('1.3%'),
-    fontSize: RFValue(17),
+    fontSize: 18,
     color: 'black',
     fontFamily: 'Poppins-Bold',
   },
@@ -194,13 +218,14 @@ const styles = StyleSheet.create({
     marginTop: hp('1.5%'),
     backgroundColor: '#FF5733',
     paddingVertical: hp('1%'),
-    paddingHorizontal: wp('1%'),
+    paddingHorizontal: 10,
+    width: 150,
     borderRadius: 5,
     alignItems: 'center',
   },
   removeButtonText: {
     color: 'white',
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
   },
   totalContainer: {
@@ -215,7 +240,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalText: {
-    fontSize: RFValue(18),
+    fontSize: 19,
     fontFamily: 'Poppins-Bold',
   },
   checkoutButton: {
@@ -228,11 +253,11 @@ const styles = StyleSheet.create({
   },
   checkoutButtonText: {
     color: 'white',
-    fontSize: RFValue(16),
+    fontSize: 17,
     fontFamily: 'Poppins-Bold',
   },
   emptyCartText: {
-    fontSize: RFValue(18),
+    fontSize: 19,
     fontFamily: 'OpenSans-Bold',
     textAlign: 'center',
     color: 'black',

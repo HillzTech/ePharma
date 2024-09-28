@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Alert, BackHandler, StatusBar } from 'react-native';
 import { ref, onValue, set, get } from 'firebase/database';
 import { realtimeDb } from "../Components/firebaseConfig";
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -82,9 +82,11 @@ const ChatScreen: React.FC<{ route: any }> = ({ route }) => {
     }
   };
 
+  
+
   return (
     <SafeAreaView style={{ flex: 1, padding: hp('3%'), backgroundColor: '#D3D3D3' }}>
-      
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
       <View style={{ flex: 1, marginTop: hp('3%') }}>
         <FlatList
           data={messages}
@@ -107,13 +109,13 @@ const ChatScreen: React.FC<{ route: any }> = ({ route }) => {
         />
         <View style={{ flexDirection: 'row', marginTop: 10 }}>
           <TextInput
-            style={{ flex: 1, borderColor: 'gray', borderWidth: 1, borderRadius: 10, height: wp('28%'), padding: wp('2%') }}
+            style={{ flex: 1, borderColor: 'gray', borderWidth: 1, borderRadius: 10, height: 70, padding: wp('2%') }}
             placeholder="Type your reply..."
             value={reply}
             onChangeText={setReply}
           />
           <TouchableOpacity onPress={sendReply} style={{ marginLeft: 10, justifyContent: 'center', padding: 10, borderRadius: 10 }}>
-            <Ionicons name='send' color={'blue'} size={RFValue(30)} />
+            <Ionicons name='send' color={'blue'} size={30} />
           </TouchableOpacity>
         </View>
       </View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, SafeAreaView, Dimensions, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, SafeAreaView, Dimensions, TouchableOpacity, TextInput, BackHandler, StatusBar, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
@@ -46,6 +46,9 @@ const PharmacyBulkScreen: React.FC = () => {
   const [isLoading, setLoading] = useState(false);
   const iconSize = width < 395 ? 30 : 34;
   const { pharmacyName, fetchPharmacyName } = usePharmacy();
+  const windowHeight = Dimensions.get('window').height;
+  const windowWidth = Dimensions.get('window').width;
+
 
   useEffect(() => {
     const currentUser = firebase.auth().currentUser;
@@ -122,6 +125,17 @@ const PharmacyBulkScreen: React.FC = () => {
     navigation.goBack();
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
   // Filter products based on the search query
   const filteredProducts = bulkProducts.filter(product =>
     product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -135,10 +149,10 @@ const PharmacyBulkScreen: React.FC = () => {
         <Text style={styles.productName}>{item.title}</Text>
         <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
 
-        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:wp('3%'), gap:wp('1%') }}>
-          <Text style={{ fontFamily:'OpenSans-Bold', fontSize:RFValue(9), borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
-          <Text style={{ fontFamily:'OpenSans-Regular', fontSize:RFValue(10), textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
-          <Text style={{ fontFamily:'OpenSans-Bold', fontSize:RFValue(10), left:wp('3%')}}>{item.bulkQuantity}pcs</Text>
+        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', right:wp('3%'), gap:7 }}>
+          <Text style={{ fontFamily:'OpenSans-Bold', fontSize:10, borderWidth:1, borderColor:'red', borderRadius:10, paddingHorizontal: wp('1.3%')}}>-{item.percentageDiscount}%</Text>
+          <Text style={{ fontFamily:'OpenSans-Regular', fontSize:11, textDecorationLine:'line-through'}}>N{item.costPrice}</Text>
+          <Text style={{ fontFamily:'OpenSans-Bold', fontSize:11, left:wp('3%')}}>{item.bulkQuantity}pcs</Text>
         </View>
         <Text style={styles.productName}>{item.pharmacyName}</Text>
       </View>
@@ -151,14 +165,16 @@ const PharmacyBulkScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.pharmacyContainer}>
-        <View style={{flexDirection: 'row', justifyContent: "space-around", alignItems: 'center', gap: wp('10%'),  marginBottom: hp('2.5%'),  right: wp('5%')}}>
+       <StatusBar backgroundColor="black" barStyle="light-content"/>
+      <View style={{flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',  marginBottom: hp('2.5%'),  right: Platform.OS === 'web' ? -7:  hp('9%'), }}>
           <TouchableOpacity onPress={handleBack}>
             <Ionicons name="chevron-back" size={30} color="black" />
           </TouchableOpacity>
           <Text style={styles.pharmacyName}>{pharmacyName || user?.username}</Text>
         </View>
        
+      <View style={styles.pharmacyContainer}>
+        
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="gray" style={styles.searchIcon} />
           <TextInput
@@ -169,6 +185,9 @@ const PharmacyBulkScreen: React.FC = () => {
           />
         </View>
       </View>
+
+      {windowWidth  < 1000 ? (
+      
       <FlatList
         data={filteredProducts}
         renderItem={renderProductItem}
@@ -178,6 +197,22 @@ const PharmacyBulkScreen: React.FC = () => {
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.productsList}
       />
+
+    ) : (
+
+      <FlatList
+        data={filteredProducts}
+        renderItem={renderProductItem}
+        keyExtractor={(item) => item.id}
+        numColumns={4}
+        key={4}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.productsList}
+      />
+
+    )}
+
+
     </SafeAreaView>
   );
 };
@@ -185,44 +220,44 @@ const PharmacyBulkScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: wp('7%'),
+    padding: wp('4%'),
     backgroundColor:'#D3D3D3'
   },
   pharmacyContainer: {
     alignItems: 'center',
     marginBottom: hp('2%'),
-    marginTop: hp('1.6%'),
+    
   },
   pharmacyName: {
     fontSize: RFValue(20),
     fontFamily: 'OpenSans-Bold',
   },
   productContainer: {
-    width: ITEM_WIDTH,
-    marginBottom: wp('3%'),
-    paddingVertical: wp('1.6%'),
+    width: 145,
+    marginBottom: 10,
+    paddingVertical: 6,
     borderRadius: 10,
     backgroundColor: 'white',
   },
   productImage: {
-    width: wp('40.3%'),
-    height: hp('14%'),
+    width: 145,
+    height: 100,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
-    bottom: hp('0.8%'),
+    bottom: 7,
   },
   productInfo: {
     alignItems: 'center',
-    marginTop: wp('2%'),
-    marginBottom: wp('3%'),
+    marginTop: 4,
+    marginBottom: 5,
   },
   productName: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     fontFamily: 'OpenSans-Bold',
     textAlign: 'center',
   },
   productPrice: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'OpenSans-SemiBold',
     marginVertical: hp('0.6%'),
   },
@@ -241,7 +276,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontFamily: 'OpenSans-Regular',
-    fontSize: RFValue(12),
+    fontSize: 13,
   },
   tagsList: {
     marginBottom: wp('5%'),
@@ -254,7 +289,7 @@ const styles = StyleSheet.create({
     marginHorizontal: wp('1%'),
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   productsList: {
     paddingBottom: wp('7%'),

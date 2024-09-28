@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { ref, get, onValue } from 'firebase/database';
 import { realtimeDb } from "../Components/firebaseConfig";
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -32,7 +32,8 @@ const AdminMessagingScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
 
   return (
     <SafeAreaView style={{ flex: 1, padding: hp('2%'), backgroundColor: '#D3D3D3' }}>
-      <View style={{ paddingVertical: wp('7%'), left: hp('13%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      <View style={{ paddingVertical: 21, left: hp('13%'), marginTop:Platform.OS === 'web'? -40:-20}}>
         <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(19) }}>Complaints</Text>
       </View>
 
@@ -41,10 +42,10 @@ const AdminMessagingScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
           data={users}
           renderItem={({ item }) => (
             <TouchableOpacity 
-              style={{ paddingVertical: wp('3%') }}
+              style={{ paddingVertical: 7 }}
               onPress={() => navigation.navigate('ChatScreen', { userId: item.uid })}
             >
-              <Text style={{ fontSize: RFValue(16), fontFamily: 'OpenSans-Bold', backgroundColor: 'white', padding: hp('1.3%'), borderRadius: 8 }}>
+              <Text style={{ fontSize: 17, fontFamily: 'OpenSans-Bold', backgroundColor: 'white', padding: hp('1.3%'), borderRadius: 8 }}>
                 {item.uid}
               </Text>
             </TouchableOpacity>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image, ActivityIndicator, Platform, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -50,8 +50,7 @@ const AdminPayments: React.FC<{ route: any, navigation: any }> = ({ route, navig
       <Text style={styles.paymentDetails}>Total Amount: {item.totalAmount}</Text>
       <Text style={styles.paymentDetails}>Customer: {item.fullName}</Text>
       <Text style={styles.paymentDetails}>Email: {item.email}</Text>
-      <Text style={styles.paymentDetails}>Status: {item.status}</Text>
-      
+    
       <Text style={styles.paymentDetails}>Date: {item.paymentDate?.toDate().toLocaleDateString() || 'N/A'}</Text>
       {item.items && item.items.map((orderItem: { productImage: any[]; productTitle: any; quantity: any; price: any; pharmacyName: any; }, index: React.Key | null | undefined) => (
         <View key={index}>
@@ -82,8 +81,8 @@ const AdminPayments: React.FC<{ route: any, navigation: any }> = ({ route, navig
 
   return (
     <SafeAreaView style={styles.container}>
-        
-        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('2%'), top:hp('2%')}}>
+        <StatusBar backgroundColor="black" barStyle="light-content"/>
+        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('1%'), top:Platform.OS === 'web'? 0:hp('0%')}}>
     <TouchableOpacity  onPress={handleback}>
     <Ionicons name="chevron-back" size={29} color="black" />
     </TouchableOpacity>
@@ -91,13 +90,14 @@ const AdminPayments: React.FC<{ route: any, navigation: any }> = ({ route, navig
    <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('29%')}}>Payments</Text>
    </View>
    
-    <View style={styles.payments}>
+
       <FlatList
         data={payments}
         renderItem={renderItem}
         keyExtractor={item => item.id}
+        contentContainerStyle={styles.productsContainer}
       />
-    </View>
+    
     </SafeAreaView>
   );
 };
@@ -107,11 +107,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#f5f5f5',
+    overflow:Platform.OS === 'web'? 'scroll': 'visible'
   },
 
   payments: {
-   
+    justifyContent:'center', 
+    alignItems:'center',
     marginTop: hp('4%'),
+    marginBottom: hp('4%'),
   },
 
   paymentItem: {
@@ -125,6 +128,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    justifyContent:'center', 
+    alignItems:'center',
+    width: 270,
+    position: 'relative',
   },
   paymentTitle: {
     fontSize: 16,
@@ -145,6 +152,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
+  productsContainer: {
+    borderRadius: 10,
+        marginBottom: hp('2%'),
+        width: wp('86%'),
+        marginRight: wp('6%'),
+        paddingHorizontal: wp('2%'),
+        paddingVertical: wp('0.5%'),
+        position: 'relative',
+},
 });
 
 export default AdminPayments;

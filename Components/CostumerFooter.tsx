@@ -47,7 +47,7 @@ const CustomerFooter: React.FC<{ route: any, navigation: any }> = ({ route, navi
   };
 
   return (
-    <><TouchableOpacity onPress={() => handleIconPress('search', 'ProductScreen')} style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('93%'), right: wp('1.5%'), left: 0, zIndex: 10 }}>
+    <><TouchableOpacity onPress={() => handleIconPress('search', 'ProductScreen')} style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('88%'), right: wp('1.5%'), left: 0, zIndex: 10 }}>
           <ImageBackground source={require('../assets/Search.png')} style={{ width: wp('20%'), height: wp('18%') }} />
       </TouchableOpacity><View
           style={{
@@ -55,7 +55,7 @@ const CustomerFooter: React.FC<{ route: any, navigation: any }> = ({ route, navi
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              top: hp('98.5%'), // Position from the top of the screen
+              top: hp('93.5%'), // Position from the top of the screen
               left: 0,
               right: 0,
               paddingHorizontal: wp('5%'),

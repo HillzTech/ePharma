@@ -25,9 +25,9 @@ export const PharmacyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const docRef = firebase.firestore().collection('pharmacy').doc(userId);
       const doc = await docRef.get();
       if (doc.exists) {
-        setPharmacyName(doc.data()?.pharmacyName || 'Pharmacy not found');
+        setPharmacyName(doc.data()?.pharmacyName);
       } else {
-        setPharmacyName('Pharmacy not found');
+      
       }
     } catch (error) {
       console.error('Error fetching pharmacy name:', error);

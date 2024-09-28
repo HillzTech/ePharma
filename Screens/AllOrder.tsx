@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image, Platform, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -194,7 +194,8 @@ const AllOrder: React.FC<{ route: any }> = ({ route}) => {
   return (
     <SafeAreaView style={styles.container}>
            {isLoading && <LoadingOverlay />}
-      <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('1%'), top:hp('4%')}}>
+           <StatusBar backgroundColor="black" barStyle="light-content"/>
+      <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('1%'), marginTop:Platform.OS === 'web'? 0:hp('-1%')}}>
     <TouchableOpacity  onPress={goBack}>
     <Ionicons name="chevron-back" size={29} color="black" />
     </TouchableOpacity>
@@ -238,10 +239,22 @@ const AllOrder: React.FC<{ route: any }> = ({ route}) => {
 
     
       
-<AdminFooter route={route} navigation={navigation}/>
-<View style={{ top: hp('2.4%'), backgroundColor: 'black', height: hp('10%'),  }}>
-              
-          </View>
+            
+        {Platform.OS === 'web'? (
+                <>
+                  
+                </>
+              ) : (
+                <>
+              <AdminFooter route={route} navigation={navigation}/>
+        <View style={{ top: hp('2.4%'), backgroundColor: 'black', height: hp('10%'),  }}>
+                      <></>
+                  </View>
+                
+                </>
+              )}
+    
+
   
     </SafeAreaView>
   );
@@ -265,7 +278,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   orderId: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
     color: '#333',
     marginBottom: hp('1%'),
@@ -276,8 +289,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   itemImage: {
-    width: wp('20%'),
-    height: hp('10%'),
+    width: 70,
+    height:80,
     marginRight: wp('4%'),
     borderRadius: 10,
   },
@@ -285,30 +298,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemText: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Regular',
     color: '#555',
     marginBottom: 4,
   },
   orderStatus: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     color: '#333',
     marginBottom: hp('1%'),
   },
   orderCol: {
     fontFamily: 'Poppins-Bold',
-    fontSize: RFValue(13),
+    fontSize: 14,
     marginBottom: hp('1%'),
   },
   orderAmount: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
     color: '#000',
     marginBottom: hp('1%'),
   },
   orderDate: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Regular',
     color: '#888',
     marginBottom: hp('1%'),
@@ -321,7 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: hp('2%'),
-    marginTop: hp('5%'),
+    marginTop: hp('2%'),
     paddingHorizontal: wp('2%'),
   },
   tag: {
@@ -334,12 +347,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'blue',
   },
   tagText: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Bold',
     color: '#333',
   },
   emptyText: {
-    fontSize: RFValue(16),
+    fontSize: 17,
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp('20%'),

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image, Platform, Dimensions, BackHandler, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -30,6 +30,8 @@ const CustomerOrderScreen: React.FC<{ route: any, navigation: any }> = ({ route,
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [selectedTag, setSelectedTag] = useState<'Pending' | 'Delivered' | 'Cancelled' | 'Processing'>('Pending');
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -102,12 +104,23 @@ const CustomerOrderScreen: React.FC<{ route: any, navigation: any }> = ({ route,
     Processing: orders.filter(order => order.status === 'Processing'),
   };
 
-  
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
 
   return (
     <SafeAreaView style={styles.container}>
         {isLoading && <LoadingOverlay />}
-<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: wp('5%'), marginTop: hp('5%'),  }}>
+        <StatusBar backgroundColor="black" barStyle="light-content"/> 
+<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: wp('5%'), marginTop:  Platform.OS === 'web' ? 1:  0,  }}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={29} color="black" />
         </TouchableOpacity>
@@ -126,7 +139,8 @@ const CustomerOrderScreen: React.FC<{ route: any, navigation: any }> = ({ route,
         ))}
       </View>
 
-      {/* Orders List */}
+      
+      {windowWidth  < 1000 ? (
       <FlatList
         data={categorizedOrders[selectedTag]}
         renderItem={renderOrderItem}
@@ -134,11 +148,42 @@ const CustomerOrderScreen: React.FC<{ route: any, navigation: any }> = ({ route,
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.emptyText}>No {selectedTag.toLowerCase()} orders found.</Text>}
       />
+    ) : (
+      <FlatList
+      data={categorizedOrders[selectedTag]}
+      renderItem={renderOrderItem}
+      keyExtractor={(item) => item.id}
+      numColumns={2}
+      key={2}
+      contentContainerStyle={styles.lgList}
+      ListEmptyComponent={<Text style={styles.emptyText}>No {selectedTag.toLowerCase()} orders found.</Text>}
+      />
+    )}
 
-<CostumerFooter route={route} navigation={navigation}/>
-<View style={{ bottom: hp('70.5%'), backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('97.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
-              <></>
-          </View>
+{Platform.OS === 'web'? (
+        <>
+          
+        </>
+      ) : (
+        <>
+        <CostumerFooter route={route} navigation={navigation} />
+          <View
+            style={{
+            
+              backgroundColor: 'black',
+              height: hp('10%'),
+              position: 'absolute',
+              justifyContent: 'center',
+              alignItems: 'center',
+              top: hp('92.5%'),
+              right: wp('0%'),
+              left: 0,
+              zIndex: 1,
+            }}
+          />
+        
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -156,7 +201,7 @@ const styles = StyleSheet.create({
     gap:  wp('6%'),
     marginBottom: hp('2%'),
     maxHeight: hp('7%'),
-    marginTop: hp('2%'),
+    marginTop: 10,
     padding: wp('5%'), 
   },
   tag: {
@@ -174,7 +219,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007bff',
   },
   tagText: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     color: '#000',
   },
@@ -185,34 +230,47 @@ const styles = StyleSheet.create({
     
         borderRadius: 10,
         marginBottom: hp('2%'),
-        width: wp('87%'),
-        marginLeft: wp('6%'),
+        width: RFValue(300),
+        marginLeft: wp('4%'),
         paddingHorizontal: wp('2%'),
         paddingVertical: wp('0.5%'),
         position: 'relative',
     
   },
+
+  lgList: {
+    
+    borderRadius: 10,
+    marginBottom: hp('2%'),
+    width: RFValue(295),
+    marginLeft: wp('2%'),
+    paddingHorizontal: wp('2%'),
+    paddingVertical: wp('0.5%'),
+    position: 'relative',
+    
+    
+},
   orderId: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
   },
   orderStatus: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Bold',
     color: '#555',
   },
   orderAmount: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'OpenSans-Bold',
     color: '#000',
   },
   orderDate: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Regular',
     color: '#777',
   },
   emptyText: {
-    fontSize: RFValue(16),
+    fontSize: 17,
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp('20%'),
@@ -224,24 +282,25 @@ const styles = StyleSheet.create({
      
   },
   itemImage: {
-    width: wp('15%'),
-    height: hp('10%'),
+    width: 50,
+    height:60,
     borderRadius: 8,
   },
   itemDetails: {
-    marginLeft: wp('4%'),
+    marginLeft: wp('1%'),
     paddingHorizontal: wp('5%')
   },
   itemText: {
-    fontSize: RFValue(12),
+    fontSize: 12,
     fontFamily: 'Poppins-Regular',
     color: '#333',
   },
   orderContainer: {
     backgroundColor: 'white',
     borderRadius: 10,
-    padding: wp('5%'),
+    padding: wp('4%'),
     marginBottom: hp('2%'),
+    
   },
 });
 

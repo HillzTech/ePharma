@@ -8,22 +8,22 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:28593816693:android:9394e26a570c638559243c",
+        "mobilesdk_app_id": "1:28593816693:android:9da5d63f589f8e7259243c",
         "android_client_info": {
           "package_name": "com.hillztech.ePharma"
         }
       },
       "oauth_client": [
         {
-          "client_id": "28593816693-q1ntubhnk0le3obli6kqlv1165gqh00e.apps.googleusercontent.com",
+          "client_id": "28593816693-0qujotamadack631ahl283m7olfurj67.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.hillztech.ePharma",
-            "certificate_hash": "7537f3563429692107fc8b027578bff9d8e7c6f2"
+            "certificate_hash": "6e27eeb7ee242737da05741696d4bb45998871fc"
           }
         },
         {
-          "client_id": "28593816693-qgtuemc9vsmk8933gigv0kd4678a0uv4.apps.googleusercontent.com",
+          "client_id": "28593816693-b124120j98nrn22s45vv4soords0u8nt.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -36,7 +36,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "28593816693-qgtuemc9vsmk8933gigv0kd4678a0uv4.apps.googleusercontent.com",
+              "client_id": "28593816693-b124120j98nrn22s45vv4soords0u8nt.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

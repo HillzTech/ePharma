@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, BackHandler, SafeAreaView, StatusBar } from 'react-native';
 import { db } from '../Components/firebaseConfig';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { format } from 'date-fns'; // Import date-fns for date formatting
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-const CompletedWithdrawalsScreen = () => {
+const CompletedWithdrawalsScreen : React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
 
   useEffect(() => {
@@ -31,6 +31,17 @@ const CompletedWithdrawalsScreen = () => {
     // Update UI
     setWithdrawals(withdrawals.filter((withdrawal) => withdrawal.id !== id));
   };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
 
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.withdrawalItem}>
@@ -65,7 +76,8 @@ const CompletedWithdrawalsScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
       <Text style={styles.header}>Withdrawal History</Text>
       <FlatList
         data={withdrawals}
@@ -73,7 +85,7 @@ const CompletedWithdrawalsScreen = () => {
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -87,12 +99,13 @@ const styles = StyleSheet.create({
     fontSize: RFValue(18),
     fontFamily: 'Poppins-Bold',
     marginBottom: hp('3%'),
-    marginTop: hp('2%'),
+    marginTop: hp('0%'),
     textAlign: 'center',
     color: '#333',
   },
   listContainer: {
     paddingBottom: hp('3%'),
+    width:300
   },
   withdrawalItem: {
     backgroundColor: '#fff',
@@ -106,12 +119,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   label: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
     color: '#555',
   },
   value: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     marginBottom: hp('1%'),
     color: '#333',
@@ -125,7 +138,7 @@ const styles = StyleSheet.create({
   },
   completeButtonText: {
     color: '#fff',
-    fontSize: RFValue(15),
+    fontSize: 16,
     fontFamily: 'Poppins-Bold',
   },
 });

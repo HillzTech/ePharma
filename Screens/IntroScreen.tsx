@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, ImageBackground, StyleSheet } from 'react-native';
+import { View, ImageBackground, StyleSheet, Platform, StatusBar } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { useAuth } from '../contexts/authContext'; // Import the useAuth hook
 import { AvatarProvider, useAvatar } from '../contexts/AvatarContext';
@@ -32,7 +32,7 @@ const IntroScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           break;
       }
     } else if (isAuthenticated === false) {
-      navigation.replace('GetStarted');
+      navigation.replace( Platform.OS === 'web' ? 'LoginScreen' : 'GetStarted');
     }
   }, [isAuthenticated, user, navigation]); // Add isAuthenticated, user, and navigation to the dependency array
 
@@ -53,6 +53,7 @@ const IntroScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
       <ImageBackground source={require('../assets/splash.png')} style={{ width: wp('80%'), height: hp('20%') }} />
     </View>
   );

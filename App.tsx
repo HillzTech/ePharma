@@ -7,7 +7,6 @@ import { LocationContextProvider } from './contexts/locationContext';
 import IntroScreen from './Screens/IntroScreen';
 import GetStartedScreen from './Screens/GetStarted';
 import LoginScreen from './Screens/LoginScreen';
-import LocationScreen from './Screens/LocationScreen';
 import HomeScreen from './Screens/HomeScreen';
 import SignupScreen from './Screens/SignupScreen';
 import RetailerScreen from './Screens/RetailerScreen';
@@ -60,8 +59,61 @@ import AllProductsScreen from './Screens/AllProductsScreen';
 import OtcDrugs from './Screens/OtcDrugs';
 import FAQScreen from './Screens/FAQScreen';
 import { Platform } from 'react-native';
+import Terms from './Screens/Terms';
+import { createBrowserHistory } from 'history';
+import { LinkingOptions } from '@react-navigation/native';
+import PolicyScreen from './Screens/PolicyScreen';
 
+const history = Platform.OS === 'web' ? createBrowserHistory() : undefined;
 
+type RootStackParamList = {
+  Intro: undefined;
+  GetStarted: undefined;
+  LoginScreen: undefined;
+  HomeScreen: undefined;
+  SignupScreen: undefined;
+  RetailerScreen: undefined;
+  CustomerScreen: undefined;
+  AddPharmacist: undefined;
+  AddToCartScreen: undefined;
+  AdminDashboard: undefined;
+  AdminMessagingScreen: undefined;
+  AdminPayments: undefined;
+  AllOrder: undefined;
+  AllProductsScreen: undefined;
+  AppointmentScreen: undefined;
+  CartScreen: undefined;
+  CategoryDetails: undefined;
+  CategoryScreen: undefined;
+  ChatScreen: undefined;
+  CompletedWithdrawals: undefined;
+  CustomerOrder: undefined;
+  EditProductScreen: undefined;
+  FAQScreen: undefined;
+  IntroScreen: undefined;
+  InventoryScreen: undefined;
+  NotificationScreen: undefined;
+  OtcDrugs: undefined;
+  PaymentScreen: undefined;
+  PendingWithdrawalsScreen: undefined;
+  PharmacyBulkScreen: undefined;
+  PharmacyDetailsScreen: undefined;
+  PharmacyInfo: undefined;
+  ProductScreen: undefined;
+  ProfileSettingsScreen: undefined;
+  PurchaseSuccessful: undefined;
+  RetailerOrderScreen: undefined;
+  RetailerProfile: undefined;
+  SeeAll: undefined;
+  SupportScreen: undefined;
+  SuccessfulUpload: undefined;
+  Terms: undefined;
+  UploadScreen: undefined;
+  WithdrawalScreen: undefined;
+  PolicyScreen: undefined;
+  
+
+};
 
 
 
@@ -113,6 +165,79 @@ export default function App() {
     return null; // Or a splash screen component
   }
 
+  if (Platform.OS === 'web') {
+    // Target root elements and override styles using JavaScript
+    const rootDiv = document.getElementById('root');
+    const body = document.body;
+
+    // Ensure scrolling is enabled on root and body
+    if (rootDiv) {
+      rootDiv.style.overflowY = 'scroll ';
+      rootDiv.style.visibility = 'visible ';
+      rootDiv.style.position = 'relative '; 
+      rootDiv.style.zIndex = 'auto'; // Change from 'fixed' to 'relative' or 'static'
+    }
+
+    
+  }
+
+
+  // Define linking configuration for web navigation
+  const linking: LinkingOptions <RootStackParamList> = {
+    prefixes: [],
+    config: {
+      screens: {
+        Intro: 'intro',
+  GetStarted: 'get-started',
+  LoginScreen: 'login',
+  HomeScreen: 'home',
+  SignupScreen: 'signup',
+  RetailerScreen: 'sellerhome',
+  CustomerScreen: 'customer-profile',
+  AddPharmacist: 'addpharmacist',
+  AddToCartScreen: 'addtocart',
+  AdminDashboard: 'admindashboard',
+  AdminMessagingScreen: 'messaging',
+  AdminPayments: 'payments',
+  AllOrder: 'admin-order',
+  AllProductsScreen: 'products',
+  AppointmentScreen: 'appointments',
+  CartScreen: 'cart',
+  CategoryDetails: 'categoryproducts',
+  CategoryScreen: 'category',
+  ChatScreen: 'chat',
+  CompletedWithdrawals: 'completed-withdrawal',
+  CustomerOrder: 'customer-order',
+  EditProductScreen: 'editproduct',
+  FAQScreen: 'FAQ',
+  InventoryScreen: 'inventory',
+  NotificationScreen: 'notifications',
+  OtcDrugs: 'otcdrugs',
+  PaymentScreen: 'payment',
+  PendingWithdrawalsScreen: 'pendingwithdrawal',
+  PharmacyBulkScreen: 'bulkproducts',
+  PharmacyDetailsScreen: 'pharmacyproducts',
+  PharmacyInfo: 'pharmacyinfo',
+  ProductScreen: 'pharmacy-location',
+  ProfileSettingsScreen: 'profile-setting',
+  PurchaseSuccessful: 'successful',
+  RetailerOrderScreen: 'seller-order',
+  RetailerProfile: 'seller-profile',
+  SeeAll: 'all-pharms',
+  SupportScreen: 'support',
+  SuccessfulUpload: 'upload',
+  Terms: 'terms',
+  UploadScreen: 'seller-upload',
+  WithdrawalScreen: 'withdrawal',
+  PolicyScreen: 'policy',
+  
+  
+      },
+    },
+  };
+
+
+
   return (
     <SignInContextProvider>
       <LocationContextProvider>
@@ -121,7 +246,11 @@ export default function App() {
         <CartProvider>
         <AllProductsProvider>
         <PharmacyProvider>
-          <NavigationContainer>
+          <NavigationContainer linking={linking}
+            fallback={<View style={{ flex: 1 }} />}
+            documentTitle={{
+              formatter: (options, route) => `${route?.name} - My App`,
+            }}>
             <Stack.Navigator
               initialRouteName="Intro"
               screenOptions={{
@@ -135,7 +264,6 @@ export default function App() {
               <Stack.Screen name="Intro" component={IntroScreen} />
               <Stack.Screen name="GetStarted" component={GetStartedScreen} />
               <Stack.Screen name="LoginScreen" component={LoginScreen} />
-              <Stack.Screen name="Location" component={LocationScreen} />
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
               <Stack.Screen name="SignupScreen" component={SignupScreen} />
               <Stack.Screen name="RetailerScreen" component={RetailerScreen} />
@@ -172,7 +300,9 @@ export default function App() {
               <Stack.Screen name="SeeAll" component={SeeAll} />
               <Stack.Screen name="FAQScreen" component={FAQScreen} />
               <Stack.Screen name="OtcDrugs" component={OtcDrugs} />
+              <Stack.Screen name="Terms" component={Terms} />
               <Stack.Screen name="AllProductsScreen" component={AllProductsScreen} />
+              <Stack.Screen name="PolicyScreen" component={PolicyScreen} />
               <Stack.Screen name="PharmacyDetailsScreen" component={PharmacyDetailsScreen} options={{ title: 'Pharmacy Details' }}/>
             </Stack.Navigator>
           </NavigationContainer>

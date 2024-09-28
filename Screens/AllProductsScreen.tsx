@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, TextInput, Dimensions, BackHandler, Platform, StatusBar, SafeAreaView } from 'react-native';
 import { AllProductsContext } from '../contexts/AllProductsContext';
 import LoadingOverlay from '../Components/LoadingOverlay';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,9 @@ const AllProductsScreen = ({ navigation }: any) => {
   const { products, isLoading } = useContext(AllProductsContext);
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [searchQuery, setSearchQuery] = useState('');
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
+
 
   // Filter products based on the search query
   useEffect(() => {
@@ -28,10 +31,33 @@ const AllProductsScreen = ({ navigation }: any) => {
     navigation.navigate('AddToCartScreen', { product });
   };
 
+  const handleback = async() => {
+    navigation.navigate('CustomerScreen')
+  }
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
+
+
+
   return (
-    <View style={styles.container}>
+    
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
       {/* Header */}
       <View style={styles.header}>
+      <TouchableOpacity  onPress={handleback}>
+    <Ionicons name="chevron-back" size={23} color="black" />
+    </TouchableOpacity>
         <Text style={styles.headerText}>All Products</Text>
       </View>
 
@@ -52,7 +78,7 @@ const AllProductsScreen = ({ navigation }: any) => {
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item.id}
-          numColumns={2}
+          numColumns={windowWidth > 1000 ? 6: 2}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => handleProductPress(item)}>
@@ -64,10 +90,7 @@ const AllProductsScreen = ({ navigation }: any) => {
                   <Text style={styles.discountText}>-{item.percentageDiscount}%</Text>
                   <Text style={styles.oldPrice}>N{item.costPrice}</Text>
                 </View>
-                <View style={{flexDirection: 'row',}}>
-                <Ionicons name="location-outline" size={15} color="black" />
-                <Text style={styles.productDistance}>{item.distance} miles away</Text>
-                </View>
+                
               </View>
             </TouchableOpacity>
           )}
@@ -77,17 +100,18 @@ const AllProductsScreen = ({ navigation }: any) => {
           <Text style={styles.noResultsText}>No products found</Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#D3D3D3' },
-  header: { marginTop:  hp('5%'), alignItems: 'center' },
-  headerText: { fontSize: RFValue(18), color: 'black', fontWeight: 'bold' },
+  header: { marginTop:  Platform.OS === 'web' ? 3: 9, alignItems: 'center', justifyContent: 'space-around', flexDirection: 'row', right: wp('12%')  },
+  headerText: { fontSize: RFValue(18), color: 'black', fontWeight: 'bold', right: wp('18%') },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'white',
     marginHorizontal: 10,
     marginVertical: 10,
@@ -97,22 +121,23 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     elevation: 2,
+    
   },
-  searchInput: { flex: 1, height: 40, paddingHorizontal: 10, fontSize: RFValue(14) },
+  searchInput: { flex: 1, height: 40, paddingHorizontal: 10, fontSize: 15, },
   listContent: { paddingBottom: 20,  width: wp('90%'), left: wp('3%') },
   productContainer: { 
-    flex: 1, margin: 10, backgroundColor: 'white', borderRadius: 10, padding: 10, 
+    flex: 1, margin: 8, backgroundColor: 'white', borderRadius: 10, 
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, elevation: 2 
   },
-  productImage: { width: wp('35%'), height: hp('14%'), borderRadius: 10 },
-  productTitle: { fontSize: RFValue(14), fontWeight: 'bold', marginVertical: 5 },
-  productPrice: { fontSize: RFValue(12), color: 'green' },
-  discountContainer: { flexDirection: 'row', gap: 5 },
-  discountText: { color: 'red', fontSize: RFValue(10) },
-  oldPrice: { textDecorationLine: 'line-through', fontSize: RFValue(10) },
+  productImage: { width: 150, height: 95, borderTopLeftRadius: 10 , borderTopRightRadius: 10 },
+  productTitle: { fontSize: 15, fontWeight: 'bold', marginVertical: 5, paddingHorizontal: 10 },
+  productPrice: { fontSize: 13, color: 'green',paddingHorizontal: 10  },
+  discountContainer: { flexDirection: 'row', gap: 5 , paddingHorizontal: 10, paddingBottom: 10},
+  discountText: { color: 'red', fontSize: 11 },
+  oldPrice: { textDecorationLine: 'line-through', fontSize: 11 },
   productDistance: { fontSize: RFValue(10), color: 'gray' },
   noResults: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  noResultsText: { fontSize: RFValue(16), color: 'gray' },
+  noResultsText: { fontSize: 17, color: 'gray' },
 });
 
 export default AllProductsScreen;

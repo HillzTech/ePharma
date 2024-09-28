@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, Image, Platform, Dimensions, BackHandler, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -40,6 +40,8 @@ const RetailerOrderScreen: React.FC<{ navigation: any, route: any }> = ({ naviga
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string>('Pending');
+  const windowHeight = Dimensions.get('window').height;
+  const windowWidth = Dimensions.get('window').width;
 
 
     // Safely extract the tag from route params
@@ -216,7 +218,16 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
     }
   };
 
-
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
   
   
   
@@ -259,16 +270,16 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
           <TouchableOpacity
             onPress={() => updateOrderStatus(item.id, 'Processing', item.customerToken, item.customerId)}
             activeOpacity={0.7}
-            style={{ backgroundColor: 'orange', padding: wp('2%'), borderRadius: 10 }}
+            style={{ backgroundColor: 'orange', padding: 9, borderRadius: 10 }}
           >
-            <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(12), color: 'white' }}>Mark as Processing</Text>
+            <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 13, color: 'white' }}>Mark as Processing</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => updateOrderStatus(item.id, 'Cancelled', item.customerToken, item.customerId)}
             activeOpacity={0.7}
-            style={{ backgroundColor: 'blue', padding: wp('2%'), borderRadius: 10 }}
+            style={{ backgroundColor: 'blue', padding: 9, borderRadius: 10 }}
           >
-            <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(12), color: 'white' }}>Cancel Order</Text>
+            <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 13, color: 'white' }}>Cancel Order</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -277,9 +288,9 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
           <TouchableOpacity
             onPress={() => updateOrderStatus(item.id, 'Delivered', item.customerToken, item.customerId)}
             activeOpacity={0.7}
-            style={{ backgroundColor: 'green', padding: wp('2%'), borderRadius: 10 }}
+            style={{ backgroundColor: 'green', padding: 9, borderRadius: 10 }}
           >
-            <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(12), color: 'white' }}>Mark as Delivered</Text>
+            <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 13, color: 'white' }}>Mark as Delivered</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -291,11 +302,13 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
   return (
     <SafeAreaView style={styles.container}>
         {isLoading && <LoadingOverlay />}
-<View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', padding: wp('1%'), marginTop: hp('4%'), right: wp('15%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+        
+<View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', padding: wp('1%'), marginTop: Platform.OS === 'web' ? 0: hp('-1%'), right: wp('15%') }}>
         <TouchableOpacity onPress={() => navigation.navigate('RetailerScreen')}>
           <Ionicons name="chevron-back" size={29} color="black" />
         </TouchableOpacity>
-        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(18), right: wp('16%') }}>Order</Text>
+        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(19), right: wp('16%') }}>Order</Text>
       </View>
 
 
@@ -325,6 +338,8 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
           <Text style={styles.tagText}>Cancelled</Text>
         </TouchableOpacity>
       </View>
+
+      {windowWidth  < 1000 ? (
       
       <FlatList
         data={filteredOrders}
@@ -335,15 +350,37 @@ const updateAdminRevenue = async (yearMonth: string, amount: number) => {
         contentContainerStyle={styles.productsContainer}
         ListEmptyComponent={<Text style={styles.emptyText}>No {selectedTag.toLowerCase()} orders found.</Text>}
       />
+    ) : (
 
+      <FlatList
+        data={filteredOrders}
+        renderItem={renderOrderItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={true}
+        numColumns={2}
+        key={2}
+        contentContainerStyle={styles.lgProductsContainer}
+        ListEmptyComponent={<Text style={styles.emptyText}>No {selectedTag.toLowerCase()} orders found.</Text>}
+      />
+    )}
 
-     <View style={{bottom:hp('76%')}}>
+{Platform.OS === 'web'? (
+        <>
+          
+        </>
+      ) : (
+        <>
+       <View style={{bottom:hp('76%')}}>
       <RetailFooter route={route} navigation={navigation}/>
-      <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.2%'), right: wp('0%'), left: 0, zIndex: 1  }}>
+      <View style={{ backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('69.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
               <></>
           </View>
 
             </View>
+
+        
+        </>
+      )}
       
 
   
@@ -370,7 +407,7 @@ const styles = StyleSheet.create({
     
   },
   orderId: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
     color: '#333',
     marginBottom: hp('1%'),
@@ -381,8 +418,8 @@ const styles = StyleSheet.create({
     marginBottom: hp('1%'),
   },
   itemImage: {
-    width: wp('20%'),
-    height: hp('10%'),
+    width: 80,
+    height: 100,
     marginRight: wp('4%'),
     borderRadius: 10,
   },
@@ -390,30 +427,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemText: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Regular',
     color: '#555',
     marginBottom: 4,
   },
   orderStatus: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     color: '#333',
     marginBottom: hp('1%'),
   },
   orderCol: {
     fontFamily: 'Poppins-Bold',
-    fontSize: RFValue(13),
+    fontSize: 14,
     marginBottom: hp('1%'),
   },
   orderAmount: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
     color: '#000',
     marginBottom: hp('1%'),
   },
   orderDate: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Regular',
     color: '#888',
     marginBottom: hp('1%'),
@@ -439,12 +476,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#007bff',
   },
   tagText: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontFamily: 'Poppins-Bold',
     color: '#333',
   },
   emptyText: {
-    fontSize: RFValue(16),
+    fontSize: 17,
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: hp('20%'),
@@ -452,11 +489,22 @@ const styles = StyleSheet.create({
   productsContainer: {
     borderRadius: 10,
         marginBottom: hp('2%'),
-        width: wp('87%'),
+        width: RFValue(295),
         marginLeft: wp('6%'),
         paddingHorizontal: wp('2%'),
         paddingVertical: wp('0.5%'),
         position: 'relative',
+        
+},
+lgProductsContainer: {
+  borderRadius: 10,
+      marginBottom: hp('2%'),
+      width: RFValue(295),
+      marginLeft: wp('2%'),
+      paddingHorizontal: wp('2%'),
+      paddingVertical: wp('0.5%'),
+      position: 'relative',
+      
 },
 columnWrapper: {
   justifyContent: 'space-between',

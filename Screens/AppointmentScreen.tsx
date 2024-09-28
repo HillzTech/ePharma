@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, Image, FlatList, Alert, Linking } from 'react-native';
+import { View, Text, SafeAreaView, TouchableOpacity, Image, FlatList, Alert, Linking, BackHandler, Platform, StatusBar } from 'react-native';
 import { Entypo, Feather, Ionicons } from '@expo/vector-icons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -164,29 +164,43 @@ const AppointmentScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
     });
   };
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
+
+
+
   const renderItem = ({ item }: { item: any }) => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', padding: wp('6%'), borderBottomWidth: 1, borderBottomColor: 'white',  }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: 'white',  }}>
       {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={{ width: wp('28%'), height: hp('18%'), borderRadius: 10 }} />
+        <Image source={{ uri: item.imageUrl }} style={{ width: 110, height: 150, borderRadius: 10 }} />
       ) : (
-        <View style={{ width: wp('20%'), height: hp('10%'), borderRadius: 10, backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ width: 110, height: 150, borderRadius: 10, backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }}>
           <Ionicons name="person" size={24} color="white" />
         </View>
       )}
-      <View style={{ marginLeft: wp('4%'), gap: wp('4%') }}>
-        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: RFValue(16) }}>{item.name}</Text>
+      <View style={{ marginLeft: wp('4%'), gap: 10 }}>
+        <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: 17 }}>{item.name}</Text>
         
         <Text>Available: {item.availability}</Text>
         <Text>Days Available: {item.daysAvailable}</Text>
         <View style={{ flexDirection: 'row', marginTop: 5 }}>
           <TouchableOpacity onPress={() => initiateWhatsAppAction(item.id, item.contactDetails, 'chat')}>
-            <Ionicons name='chatbox' size={30} color={'blue'} style={{ marginRight: wp('7%') }}/>
+            <Ionicons name='chatbox' size={30} color={'grey'} style={{ marginRight: wp('7%') }}/>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => initiateWhatsAppAction(item.id, item.contactDetails, 'voice')}>
-             <Ionicons name='call' size={30} color={'blue'} style={{ marginRight: wp('7%') }}/>
+             <Ionicons name='call' size={30} color={'grey'} style={{ marginRight: wp('7%') }}/>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => initiateWhatsAppAction(item.id, item.contactDetails, 'video')}>
-          <Entypo name="video-camera" size={30} color="blue" style={{ marginRight: wp('7%') }}/>
+          <Entypo name="video-camera" size={30} color="grey" style={{ marginRight: wp('7%') }}/>
           </TouchableOpacity>
         </View>
       </View>
@@ -196,7 +210,8 @@ const AppointmentScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
   return (
     <SafeAreaView style={{ flex: 1 , backgroundColor: '#D3D3D3'}}>
       {isLoading && <LoadingOverlay />}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: wp('5%'), top: hp('3%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', padding: 10, top: Platform.OS === 'web' ? -0.3: 0, gap: 80 }}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={29} color="black" />
         </TouchableOpacity>
@@ -207,7 +222,7 @@ const AppointmentScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
         data={pharmacists}
         keyExtractor={(item, index) => index.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: hp('10%') }}
+        contentContainerStyle={{ paddingBottom: 4 }}
       />
 
       

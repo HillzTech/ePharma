@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, TextInput, PermissionsAndroid } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView, TextInput, PermissionsAndroid, Platform, Dimensions, StatusBar } from 'react-native';
 import { Paystack } from 'react-native-paystack-webview';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useCart } from '../contexts/CartContext';
@@ -15,13 +15,39 @@ const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { totalAmount, email, orderData, customerId } = route.params as { totalAmount: number; email: string; orderData: any, customerId: any };
   const { clearCart } = useCart();
-
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
   const [address, setAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
 
   const paystackWebViewRef = useRef<any>(null);
   const referenceNumber = Math.random().toString(36).substring(2); // Generate a unique reference number
+
+
+  // add this to the index.html file <script src="https://js.paystack.co/v1/inline.js"></script>
+
+
+   const handleWebPayment = () => {
+    const handler = (window as any).PaystackPop.setup({
+      key: 'pk_test_b51549608edae360b126259810507fc3e6537b1a', // Paystack public key for web
+      email: email,
+      amount: totalAmount * 100, // Paystack amount is in kobo
+      currency: 'NGN',
+      ref: referenceNumber,
+      callback: (response: any) => {
+        // Handle the response after a successful payment
+        console.log('Payment successful:', response);
+        createOrderInFirestore();
+        clearCart();
+        navigation.navigate('PurchaseSuccessful');
+      },
+      onClose: () => {
+        console.log('Payment window closed');
+      },
+    });
+    handler.openIframe(); // Open Paystack's payment modal
+  };
 
   const createOrderInFirestore = async () => {
     try {
@@ -151,6 +177,7 @@ const PaymentScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
       <Paystack
         paystackKey="pk_test_b51549608edae360b126259810507fc3e6537b1a" // Use your actual Paystack public key
         channels={["card", "ussd", "bank", "qr", "mobile_money"]}
@@ -174,7 +201,7 @@ const PaymentScreen: React.FC = () => {
 
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={RFValue(30)} color="black" />
+          <Ionicons name="chevron-back" size={30} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Checkout</Text>
       </View>
@@ -199,11 +226,13 @@ const PaymentScreen: React.FC = () => {
           value={phoneNumber}
           onChangeText={setPhoneNumber}
         />
-      </View>
 
-      <TouchableOpacity style={styles.payButton} onPress={() => paystackWebViewRef.current?.startTransaction()}>
+   <TouchableOpacity style={styles.payButton} onPress={Platform.OS === 'web' ? handleWebPayment :() => paystackWebViewRef.current?.startTransaction()}>
         <Text>Pay Now</Text>
       </TouchableOpacity>
+      </View>
+
+     
     </SafeAreaView>
   );
 };
@@ -215,35 +244,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#D3D3D3',
   },
   inputContainer: {
-    marginBottom: hp('2%'),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
     borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 5,
     padding: 10,
+    width: 320,
     marginBottom: hp('1%'),
     backgroundColor: 'white',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: hp('2.5%'),
+    justifyContent: 'space-around',
+  
     marginBottom: wp('5%'),
+    right: wp('18%'),
   },
   headerText: {
     fontSize: RFValue(19),
     fontFamily: 'Poppins-Bold',
     textAlign: 'center',
     color: 'black',
-    right: wp('35%'),
+    
   },
   payButton: {
     alignItems: 'center',
     backgroundColor: '#4CAF50',
     padding: 10,
     borderRadius: 5,
+    width: 320,
+    marginTop: 20,
   },
 });
 

@@ -2,9 +2,12 @@ import { initializeApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore, collection } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage'; // Import getStorage
+import { getStorage } from 'firebase/storage';
 import { getDatabase } from 'firebase/database';
+import { Platform } from 'react-native';
 
+
+// Firebase configuration
 export const firebaseConfig = {
     apiKey: "AIzaSyAX8WmBiC3cwT5q_5vvozZ6AeSEgZKDwjg",
     authDomain: "epharma-97b49.firebaseapp.com",
@@ -18,13 +21,18 @@ export const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// Determine the correct persistence method based on the platform
+const persistence = Platform.OS === 'web'
+  ? undefined
+  : getReactNativePersistence(AsyncStorage);
+
+// Initialize Auth with appropriate persistence
 export const auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
+    persistence
 });
 
 export const db = getFirestore(app);
-export const storage = getStorage(app); // Initialize Firebase Storage
-
+export const storage = getStorage(app);
 export const realtimeDb = getDatabase(app);
 
 export const usersRef = collection(db, 'users');

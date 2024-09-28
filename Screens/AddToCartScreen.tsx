@@ -1,6 +1,6 @@
 // AddToCartScreen.tsx
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions, Platform, BackHandler, StatusBar } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useCart } from '../contexts/CartContext'; 
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -25,6 +25,8 @@ const AddToCartScreen: React.FC = () => {
   const { addToCart, getCartItemCount } = useCart();
   const { product } = route.params as { product: Product };
   const { imageUrls = [], title = 'Unknown', price = 0 } = product || {};
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
   const [quantity, setQuantity] = useState<number>(1);
 
@@ -45,21 +47,41 @@ const AddToCartScreen: React.FC = () => {
   const handleCart = () => {
     navigation.navigate('CartScreen');
   };
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
 
   if (!product) {
     return <Text>No product data available</Text>; // or any placeholder/loading component
   }
 
+    useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: wp('3%'), marginTop: wp('3%') }}>
+     <StatusBar backgroundColor="black" barStyle="light-content"/> 
+<View style={{ padding: 30, marginTop: windowWidth > 1000 ? -30 : hp('-4%')}}>
+<TouchableOpacity onPress={handleBack} style={{  bottom:  Platform.OS === 'web' ? hp('3%') :  hp('-1%'), right:20}}>
+            <Ionicons name="chevron-back" size={30} color="black" />
+          </TouchableOpacity>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: wp('3%'), bottom:  Platform.OS === 'web' ? wp('12%') : wp('6%') }}>
         <TouchableOpacity onPress={handleNotification}>
-          <Ionicons name="notifications-outline" size={RFValue(24)} color="black" />
+          <Ionicons name="notifications-outline" size={24} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleCart}>
           <View style={styles.cartIconContainer}>
-            <Ionicons name="cart-outline" size={RFValue(24)} color="black" />
+            <Ionicons name="cart-outline" size={24} color="black" />
             {getCartItemCount() > 0 && (
               <View style={styles.cartItemCount}>
                 <Text style={styles.cartItemCountText}>{getCartItemCount()}</Text>
@@ -93,10 +115,11 @@ const AddToCartScreen: React.FC = () => {
         </Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: wp('19%'), borderColor: 'grey', borderWidth: 1, width: wp('100%'), paddingVertical: wp('1%'), marginTop: hp('5%'), right: hp('3.8%') }}>
           <Text style={styles.productPrice}>N{product.price.toFixed(2)}</Text>
-          <TouchableOpacity onPress={handleAddToCart} style={{ backgroundColor: 'blue', padding: wp('3.5%'), borderRadius: 7 }}>
-            <Text style={{ color: 'white', fontFamily: 'OpenSans-Bold', fontSize: RFValue(14) }}>ADD TO CART</Text>
+          <TouchableOpacity onPress={handleAddToCart} style={{ backgroundColor: 'blue', padding: 11, borderRadius: 7 }}>
+            <Text style={{ color: 'white', fontFamily: 'OpenSans-Bold', fontSize: 15 }}>ADD TO CART</Text>
           </TouchableOpacity>
         </View>
+      </View>
       </View>
     </SafeAreaView>
   );
@@ -105,30 +128,30 @@ const AddToCartScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: wp('8%'),
+    
     backgroundColor: '#D3D3D3',
   },
   productContainer: {
     marginTop: wp('6%'),
   },
   productImage: {
-    width: wp('70%'),
-    height: hp('29%'),
+    width: 260,
+    height: 210,
     borderColor: 'white',
     marginRight: wp('3%'),
   },
   productTitle: {
-    fontSize: RFValue(16),
-    fontWeight: 'bold',
+    fontSize: 17,
+     fontFamily: 'Poppins-Bold',
     marginVertical: hp('2%'),
   },
   productPrice: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     color: 'black',
     fontFamily: 'Poppins-Regular',
   },
   prescriptionText: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     color: 'black',
     marginVertical: hp('1%'),
     fontFamily: 'Poppins-Regular'
@@ -136,24 +159,24 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: hp('1%'),
+    marginVertical: 9,
   },
   quantityButton: {
     borderWidth: 1,
     borderColor: 'gray',
     borderRadius: 5,
-    padding: hp('1%'),
-    width: wp('10%'),
+    padding: 6,
+    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quantityButtonText: {
-    fontSize: RFValue(15),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold'
   },
   quantityText: {
-    marginHorizontal: wp('4%'),
-    fontSize: RFValue(17),
+    marginHorizontal: 9,
+    fontSize: 18,
     color: 'black',
     fontFamily: 'Poppins-Bold'
   },
@@ -173,7 +196,7 @@ const styles = StyleSheet.create({
   },
   cartItemCountText: {
     color: 'white',
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontWeight: 'bold',
   },
 });

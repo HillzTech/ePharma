@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, Dimensions, TextInput, FlatList, Button, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, Dimensions, TextInput, FlatList, Button, ImageBackground, Platform, BackHandler, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/storage';
@@ -37,7 +37,8 @@ const CustomerScreen: React.FC<{ route: any, navigation: any }> = ({ route, navi
   const [selectedIcon, setSelectedIcon] = useState<string>('home'); // Default selected icon
   const [isLoading, setLoading] = useState(false);
   const { avatar, setAvatar } = useAvatar();
-
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
   
   
@@ -188,7 +189,19 @@ const fetchUserRole = async (userId: string) => {
 
 const handleback = async() => {
   navigation.navigate('HomeScreen')
+
 }
+
+useEffect(() => {
+  const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+    navigation.goBack();
+    return true;
+  });
+
+  return () => {
+    backHandler.remove();
+  };
+}, [navigation]);
 
 const handleLogOut = async ()=>{
     await logout();
@@ -217,79 +230,87 @@ const handleLogOut = async ()=>{
   return (
     <SafeAreaView style={styles.container}>
         {isLoading && <LoadingOverlay />}
-   <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:wp('5%'), top:hp('3%')}}>
+        <StatusBar backgroundColor="black" barStyle="light-content"/>
+   <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:windowWidth > 1000 ? wp('1.5%') : wp('5%'), top:Platform.OS === 'web' ? -2: 0}}>
     <TouchableOpacity  onPress={handleback}>
     <Ionicons name="chevron-back" size={23} color="black" />
     </TouchableOpacity>
    
-   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right:wp('32%')}}>My profile</Text>
+   <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(18), right: windowWidth > 1000 ? wp('40%') : wp('32%')}}>My profile</Text>
    </View>
 
-
-      <View style={{marginTop:hp('1%'), flexDirection:'row', alignItems:'center', justifyContent:'space-between',paddingHorizontal:wp('6%')}}>
+     
+      <View style={{marginTop:Platform.OS === 'web' ? -14: hp('-2.5%'), flexDirection:'row', alignItems:'center', justifyContent:'space-between',paddingHorizontal:wp('6%')}}>
       <TouchableOpacity onPress={handleAvatarChange}  style={{left:wp('1%'), top:hp('1%')}}>
             <Image
               source={avatar ? { uri: avatar } : require('../assets/avatar.png')}
-              style={styles.avatar}
+              style={windowWidth > 1000 ? styles.largeAvatar : styles.avatar}
             />
-            <Ionicons name='camera' size={23} color={'white'} style={{bottom:hp('3.5%'), left:wp('10%')}}/>
+            <Ionicons name='camera' size={23} color={'white'} style={{bottom:hp('3.5%'), left:windowWidth > 1000 ? wp('4%') : wp('10%')}}/>
             
             
           </TouchableOpacity>
          
-          {user && (
-        <View style={{paddingHorizontal:wp('6%'), right: wp('15%')}}>
-          <Text style={styles.username}>{user.username}</Text>
-          <Text style={{fontFamily:'Poppins-Regular', bottom:hp('1%'), fontSize:RFValue(9)}}>{user.email}
-          </Text>
-          
-        </View>
-      )}
+          {user ? (
+    // Show username and email if user is signed in
+    <View style={{paddingHorizontal: wp('6%'), right: windowWidth > 1000 ? wp('55%') : wp('15%')}}>
+      <Text style={styles.username}>{user.username}</Text>
+      <Text style={{fontFamily: 'Poppins-Regular', bottom: hp('1%'), fontSize: 10}}>{user.email}</Text>
+    </View>
+  ) : (
+    // Show login button if user is not signed in
+    <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')} style={{ right: 13 }}>
+      <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: 16 }}>Login</Text>
+    </TouchableOpacity>
+  )}
 
           
 
       </View>
 
-      <View  style={{flexDirection:'column', margin:hp('1%'), gap: hp('2%')}}>
-        <TouchableOpacity onPress={handleOtc} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+      
+      
+      <View style={{flexDirection:'row', margin:hp('1%'), gap: windowWidth > 1000 ? hp('2%') : hp('1%'), justifyContent:'space-around', alignItems:'center', flexWrap: 'wrap', marginTop:windowWidth > 1000 ? hp('7%') : hp('0%')}}>
+    
+        <TouchableOpacity onPress={handleOtc} style={{ padding: windowWidth > 1000 ? wp('1%') : wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10, width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Buy OTC Drugs</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Browse through our otc and new expiry drugs</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Browse through our otc and new expiry drugs</Text>
           </View>
 
 
-          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left: windowWidth > 1000 ? wp('0.2%') : wp('3%'), opacity:0.5}}/>
 
           </View>
           
         
         </TouchableOpacity>
         
-        <TouchableOpacity onPress={handleComplaints} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleComplaints} style={{ padding: windowWidth > 1000 ? wp('1%') : wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10,  width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Emergency</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Chat with our Customer Support</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Chat with our Customer Support</Text>
           </View>
 
 
-          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left: windowWidth > 1000 ? wp('0.2%') : wp('3%'), opacity:0.5}}/>
 
           </View>
           
         
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleSource} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleSource} style={{ padding: windowWidth > 1000 ? wp('1%') : wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10,  width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Source for Drugs</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10),  opacity:0.6}}>Check out all products available</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11,  opacity:0.6}}>Check out all products available</Text>
           </View>
 
 
-          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left: windowWidth > 1000 ? wp('0.2%') : wp('3%'), opacity:0.5}}/>
 
           </View>
           
@@ -298,38 +319,39 @@ const handleLogOut = async ()=>{
 
        
 
-        <TouchableOpacity onPress={handleSettings} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleSettings} style={{ padding: windowWidth > 1000 ? wp('1%') : wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10,  width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Settings</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Notifications, password</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize:11, opacity:0.6}}>Notifications, password</Text>
           </View>
 
 
-          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left: windowWidth > 1000 ? wp('0.2%') : wp('3%'), opacity:0.5}}/>
           </View>
           
         
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleFAQ} style={{ padding:wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10}}>
+        <TouchableOpacity onPress={handleFAQ} style={{ padding: windowWidth > 1000 ? wp('1%') : wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10,  width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>FAQ</Text>
-          <Text style={{fontFamily:'Poppins-Regular',fontSize: RFValue(10), opacity:0.6}}>Frequently asked Questions</Text>
+          <Text style={{fontFamily:'Poppins-Regular',fontSize: 11, opacity:0.6}}>Frequently asked Questions</Text>
           </View>
 
 
-          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left: windowWidth > 1000 ? wp('0.2%') : wp('3%'), opacity:0.5}}/>
           </View>
           
         
         </TouchableOpacity>
 
 
-        <TouchableOpacity style={{ padding:wp('5%'), backgroundColor:'#FAF9F6',borderRadius:10}} onPress={handleLogOut}>
+
+        {user ? (
+
+        <TouchableOpacity onPress={handleLogOut} style={{ padding: windowWidth > 1000 ? wp('1%') : wp('4%'), backgroundColor:'#FAF9F6',borderRadius:10, width: 340}}>
           <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center'}}>
           <View>
           <Text style={styles.content}>Logout</Text>
@@ -337,18 +359,19 @@ const handleLogOut = async ()=>{
           </View>
 
 
-          <Ionicons name="chevron-forward" size={23} color="black" style={{left:wp('3%'), opacity:0.5}}/>
-
+          <Ionicons name="chevron-forward" size={23} color="black" style={{left: windowWidth > 1000 ? wp('0.2%') : wp('3%'), opacity:0.5}}/>
           </View>
           
         
         </TouchableOpacity>
 
-       
+          ) : (
+            <></>
+          )}
         
       </View>
 
-     
+      
       
 
     </SafeAreaView>
@@ -359,15 +382,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#D3D3D3',
+     overflow: Platform.OS === 'web' ? 'scroll' : 'visible'
   },
   username: {
-    fontSize: RFValue(19),
+    fontSize: 20,
     fontFamily: 'Poppins-Bold',
     
   },
   avatar: {
     width: wp('18%'),
     height: hp('8%'),
+    borderRadius: RFValue(50),
+
+  },
+
+  largeAvatar: {
+    width: wp('5%'),
+    height: hp('10%'),
     borderRadius: RFValue(50),
 
   },
@@ -411,10 +442,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: RFValue(15),
+    fontSize: 15,
   },
   price: {
-    fontSize:  RFValue(15),
+    fontSize:  16,
     fontWeight: 'bold',
   },
   closeButton: {
@@ -424,7 +455,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    fontSize: RFValue(17),
+    fontSize: 18,
     fontFamily: 'OpenSans-Bold',
     
   },

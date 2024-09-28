@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { db } from '../Components/firebaseConfig';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { format } from 'date-fns'; // Import date-fns for date formatting
@@ -70,7 +70,8 @@ const PendingWithdrawalsScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
       <Text style={styles.header}>Pending Withdrawals</Text>
       <FlatList
         data={withdrawals}
@@ -78,7 +79,7 @@ const PendingWithdrawalsScreen = () => {
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -86,18 +87,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#D3D3D3',
-    padding: hp('3%'),
+    padding: hp('2%'),
   },
   header: {
     fontSize: RFValue(18),
     fontFamily: 'Poppins-Bold',
     marginBottom: hp('3%'),
-    marginTop: hp('2%'),
+    marginTop: hp('0%'),
     textAlign: 'center',
     color: '#333',
   },
   listContainer: {
     paddingBottom: hp('3%'),
+    width:320
   },
   withdrawalItem: {
     backgroundColor: '#fff',
@@ -111,12 +113,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   label: {
-    fontSize: RFValue(14),
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
     color: '#555',
   },
   value: {
-    fontSize: RFValue(13),
+    fontSize: 14,
     fontFamily: 'Poppins-Regular',
     marginBottom: hp('1%'),
     color: '#333',
@@ -130,7 +132,7 @@ const styles = StyleSheet.create({
   },
   completeButtonText: {
     color: '#fff',
-    fontSize: RFValue(15),
+    fontSize: 16,
     fontFamily: 'Poppins-Bold',
   },
 });

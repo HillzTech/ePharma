@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
-import GetLocation from 'react-native-get-location';
+import { View, Text, FlatList, Image, StyleSheet, Alert, TouchableOpacity, SafeAreaView, Platform, BackHandler, StatusBar } from 'react-native';
 import haversine from 'haversine-distance';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/authContext';
 import { db } from '../Components/firebaseConfig';
-import MapView, { Marker } from 'react-native-maps';
-import openMap from 'react-native-open-maps';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import CostumerFooter from '../Components/CostumerFooter';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import LoadingOverlay from '../Components/LoadingOverlay';
+import Geolocation from '@react-native-community/geolocation';
+
+
+// Conditionally import map-related libraries for mobile platforms
+const MapView = Platform.OS !== 'web' ? require('react-native-maps').default : null;
+const Marker = Platform.OS !== 'web' ? require('react-native-maps').Marker : null;
+const openMap = Platform.OS !== 'web' ? require('react-native-open-maps').default : null;
 
 interface Pharmacy {
   id: string;
@@ -34,17 +38,20 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
 
   // Fetch the user's location
   useEffect(() => {
-    const getUserLocation = async () => {
-      try {
-        setLoading(true);
-        const location = await GetLocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-        setUserLocation({ latitude: location.latitude, longitude: location.longitude });
-      } catch (error) {
+    Geolocation.getCurrentPosition(
+      position => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      },
+      error => {
         Alert.alert('Error', 'Failed to get user location. Ensure location services are enabled.');
-      }
-    };
-    getUserLocation();
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
   }, []);
+  
 
   // Fetch pharmacies once the user's location is available
   useEffect(() => {
@@ -53,7 +60,6 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
     }
   }, [userLocation]);
 
-  // Function to fetch pharmacies and reverse geocode their locations
   const fetchPharmacies = async () => {
     try {
       setLoading(true);
@@ -69,9 +75,7 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
       for (const doc of querySnapshot.docs) {
         const data = doc.data();
         if (data.location) {
-          // Reverse geocode to get address
           const address = await reverseGeocode(data.location.latitude, data.location.longitude);
-          
           const pharmacy: Pharmacy = {
             id: doc.id,
             pharmacyImage: data.pharmacyImage,
@@ -97,14 +101,15 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
         });
         const sortedPharmacies = pharmaciesWithDistance.sort((a, b) => a.distance - b.distance);
         setPharmacies(sortedPharmacies);
-        setCurrentPharmacy(sortedPharmacies[0]); // Set the first pharmacy as the default
+        setCurrentPharmacy(sortedPharmacies[0]);
       }
     } catch (error) {
       console.error('Error fetching pharmacies:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Reverse geocoding function to convert lat/lng to address using Nominatim OpenStreetMap API
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
@@ -113,76 +118,60 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
     } catch (error) {
       console.error('Error reverse geocoding:', error);
       return 'Address not available';
-    }finally {
-      setLoading(false);
     }
   };
 
-  // Function to open directions using the native map app
   const openDirections = (latitude: number, longitude: number) => {
-    openMap({ start: `${userLocation?.latitude},${userLocation?.longitude}`, end: `${latitude},${longitude}` });
+    if (openMap && userLocation) {
+      openMap({ start: `${userLocation.latitude},${userLocation.longitude}`, end: `${latitude},${longitude}` });
+    }
   };
 
-  // Function triggered when viewable items change in the FlatList
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
-      setCurrentPharmacy(viewableItems[0].item); // Automatically update the map to the first viewable item
+      setCurrentPharmacy(viewableItems[0].item);
     }
   }).current;
 
-  // Configuration for viewability in FlatList
   const viewabilityConfig = {
-    itemVisiblePercentThreshold: 50, // Set threshold to ensure at least 50% visibility before triggering change
+    itemVisiblePercentThreshold: 50,
   };
 
-  // Render each pharmacy item, including the map for the current pharmacy
   const renderPharmacyItem = ({ item }: { item: Pharmacy }) => {
-    const distanceInMiles = parseFloat((item.distance * 0.000621371).toFixed(0)); // Convert meters to miles and parse it as a number
+    const distanceInMiles = parseFloat((item.distance * 0.000621371).toFixed(0));
 
-// Average speeds (in miles per hour)
-    const walkingSpeed = 3.1;  // Walking speed
-    const drivingSpeed = 31;   // Driving speed
+    const walkingSpeed = 3.1;
+    const drivingSpeed = 31;
 
-    // Calculate estimated travel time in minutes
-    const walkTimeInMinutes = (distanceInMiles / walkingSpeed) * 60;  // Convert hours to minutes
-    const driveTimeInMinutes = (distanceInMiles / drivingSpeed) * 60; // Convert hours to minutes
+    const walkTimeInMinutes = (distanceInMiles / walkingSpeed) * 60;
+    const driveTimeInMinutes = (distanceInMiles / drivingSpeed) * 60;
 
-
+   
     return (
       <View style={styles.pharmacyContainer}>
         <TouchableOpacity onPress={() => setCurrentPharmacy(item)}>
-          <Image
-            source={item.pharmacyImage ? { uri: item.pharmacyImage } : require('../assets/Pharmacy.jpg')}
-            style={styles.pharmacyImage}
-          />
+          <Image source={item.pharmacyImage ? { uri: item.pharmacyImage } : require('../assets/Pharmacy.jpg')} style={styles.pharmacyImage} />
           <View style={styles.pharmacyInfo}>
             <Text style={styles.pharmacyName}>{item.pharmacyName}</Text>
             <Text style={styles.pharmacyAddress}>{item.location.address}</Text>
             <Text style={styles.pharmacyDistance}>{distanceInMiles} miles away</Text>
-
-            {/* Display walking and driving times */}
-
-            <View style={{flexDirection: 'row', gap: wp('20.5%'),  top: hp('2%')}}>
-            <View style={{flexDirection: 'row', gap: wp('2%')}}>
-            <FontAwesome5 name="walking" size={RFValue(22)} color="black" />
-            <Text style={styles.travelTime}>{walkTimeInMinutes.toFixed(0)} min</Text>
+            <View style={{ flexDirection: 'row', gap: wp('20.5%'), top: hp('2%') }}>
+              <View style={{ flexDirection: 'row', gap: wp('2%') }}>
+                <FontAwesome5 name="walking" size={RFValue(22)} color="black" />
+                <Text style={styles.travelTime}>{walkTimeInMinutes.toFixed(0)} min</Text>
               </View>
-              
-              <View style={{flexDirection: 'row',  gap: wp('2%')}}>
-              <FontAwesome name="bus" size={RFValue(22)} color="black" />
-              <Text style={styles.travelTime}>{driveTimeInMinutes.toFixed(0)} min</Text>
+              <View style={{ flexDirection: 'row', gap: wp('2%') }}>
+                <FontAwesome name="bus" size={RFValue(22)} color="black" />
+                <Text style={styles.travelTime}>{driveTimeInMinutes.toFixed(0)} min</Text>
+              </View>
             </View>
-
-            </View>
-            
-          
-            
-            <View style={{  backgroundColor: 'blue', borderRadius: 50, bottom: hp('7%'),
-    left: wp('34%'), width: wp('13%'), height: wp('13%')}}>
-            <TouchableOpacity onPress={() => openDirections(item.location.latitude, item.location.longitude)}>
-              <FontAwesome name="location-arrow" size={RFValue(28)} color="white" style={styles.directionsButton} />
-            </TouchableOpacity>
-            </View>
+            {openMap && (
+              <View style={{ backgroundColor: 'blue', borderRadius: 50, bottom: hp('7%'), left: wp('34%'), width: wp('13%'), height: wp('13%') }}>
+                <TouchableOpacity onPress={() => openDirections(item.location.latitude, item.location.longitude)}>
+                  <FontAwesome name="location-arrow" size={RFValue(28)} color="white" style={styles.directionsButton} />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
       </View>
@@ -191,8 +180,10 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
 
   return (
     <SafeAreaView style={styles.container}>
-        {isLoading && <LoadingOverlay />}
-      {currentPharmacy && (
+      {isLoading && <LoadingOverlay />}
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      
+      {MapView && currentPharmacy && (
         <MapView
           style={styles.map}
           region={{
@@ -200,10 +191,9 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
             longitude: currentPharmacy.location.longitude,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
-          }}>
-          <Marker
-            coordinate={{ latitude: currentPharmacy.location.latitude, longitude: currentPharmacy.location.longitude }}
-          />
+          }}
+        >
+          <Marker coordinate={{ latitude: currentPharmacy.location.latitude, longitude: currentPharmacy.location.longitude }} />
         </MapView>
       )}
       <View style={{ paddingHorizontal: hp('1%'), padding: wp('2%') }}>
@@ -213,22 +203,17 @@ const ProductScreen: React.FC<{ route: any, navigation: any }> = ({ route, navig
           keyExtractor={(item) => item.id}
           horizontal
           pagingEnabled
-          onViewableItemsChanged={onViewableItemsChanged} // Hook to handle viewable items
-          viewabilityConfig={viewabilityConfig} // Viewability configuration
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
         />
       </View>
-
-
       <View style={{ bottom: hp('94%'), position: 'absolute', top: hp('0%'), right: wp('0%'), left: 0, zIndex: 10 }}>
         <CostumerFooter route={route} navigation={navigation} />
-        <View style={{ top: hp('97%'), backgroundColor: 'black', height: hp('10%') }}>
-        <></>
+        <View style={{ top: hp('92%'), backgroundColor: 'black', height: hp('10%') }}>
+          <></>
+        </View>
       </View>
-      </View>
-      
-      
     </SafeAreaView>
-    
   );
 };
 
@@ -246,7 +231,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: wp('100%'),
-    height: hp('50%'),
+    height: hp('47%'),
   },
   pharmacyImage: {
     width: wp('89%'),

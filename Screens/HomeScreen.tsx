@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, Dimensions, TextInput, FlatList, Button, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, Alert, Dimensions, TextInput, FlatList, Button, ImageBackground, ScrollView, Platform, Modal, BackHandler, StatusBar } from 'react-native';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/storage';
@@ -24,6 +24,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import CostumerFooter from '../Components/CostumerFooter';
 import { AllProductsContext } from '../contexts/AllProductsContext';
 import LoadingOverlay from '../Components/LoadingOverlay';
+import Geolocation from '@react-native-community/geolocation';
+import { NavMenu } from '../Components/NavMenu';
+
 
 interface Product {
   id: string;
@@ -66,9 +69,19 @@ const HomeScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigati
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const { addToCart, getCartItemCount } = useCart();
   const [hasUnreadMessages, setHasUnreadMessages] = useState<boolean>(false);
-  
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [nav, setNav] = useState(false);
 
+
+  // Toggle menu visibility
+  const toggleMenu = () => {
+    setIsMenuVisible(!isMenuVisible);
+  };
+
+  
 
   useFocusEffect(
     React.useCallback(() => {
@@ -198,32 +211,28 @@ const getAddressFromCoordinates = async (latitude: number, longitude: number) =>
   }
 };
 
+
 // Fetch User Location
 useEffect(() => {
-  const getUserLocation = async () => {
-    try {
-      const location = await GetLocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 15000,
-      });
-      console.log('User location:', location); // Debug log
+  Geolocation.getCurrentPosition(
+    async (position) => {
       setUserLocation({
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
       });
 
-      // Fetch address for the user
-      const address = await getAddressFromCoordinates(location.latitude, location.longitude);
-      console.log('User address:', address);
-      setUserAddress(address); // Update state with user's address
-
-    } catch (error) {
+      const address = await getAddressFromCoordinates(position.coords.latitude, position.coords.longitude);
+      setUserAddress(address);
+    },
+    (error) => {
       console.error('Error getting user location:', error);
-      Alert.alert('Error', 'Failed to get user location. Ensure location services are enabled and permissions are granted.');
+      Alert.alert('Error', 'Failed to get user location.');
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
     }
-  };
-
-  getUserLocation();
+  );
 }, []);
 
 useEffect(() => {
@@ -236,11 +245,6 @@ const fetchPharmacies = async () => {
   try {
     const pharmacyCollection = collection(db, 'pharmacy');
     const querySnapshot = await getDocs(pharmacyCollection);
-
-    if (querySnapshot.empty) {
-      console.log('No pharmacies found.');
-      return;
-    }
 
     const fetchedPharmacies: Pharmacy[] = [];
 
@@ -262,7 +266,7 @@ const fetchPharmacies = async () => {
             longitude: location.longitude,
             address: location.address,
           },
-          distance: 0, // Initialize distance to 0; will be calculated later
+          distance: 0,
         };
 
         fetchedPharmacies.push(pharmacy);
@@ -286,18 +290,19 @@ const fetchPharmacies = async () => {
   }
 };
 
+
 const renderPharmacyItem = ({ item }: { item: Pharmacy }) => (
-  <TouchableOpacity style={styles.pharmacyContainer} onPress={() => handlePress(item.id)}>
+  <TouchableOpacity style={windowWidth > 1000 ? styles.largePharmacyContainer : styles.pharmacyContainer} onPress={() => handlePress(item.id)}>
     <Image
       source={item.pharmacyImage ? { uri: item.pharmacyImage } : require('../assets/Pharmacy.jpg')}
-      style={styles.pharmacyImage}
+      style={windowWidth > 1000 ? styles.largePharmacyImage : styles.pharmacyImage}
     />
     
     <View style={styles.pharmacyInfo}>
       <Text style={styles.pharmacyName}>{item.pharmacyName}</Text>
       
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap:wp('4%') }}>
-          <Ionicons name="location-outline" size={RFValue(15)} color="black" />
+          <Ionicons name="location-outline" size={15} color="black" />
           <Text style={styles.pharmacyDistance}>{(item.distance * 0.000621371).toFixed(0)} miles away</Text>
         </View>
       <Text style={styles.pharmacyAddress}>{item.location.address}</Text>
@@ -331,15 +336,33 @@ const handlePress = (pharmacyId: string) => {
   navigation.navigate('PharmacyDetailsScreen', { pharmacyId }); // Navigate to PharmacyDetailsScreen with pharmacyId
 };
 
+useEffect(() => {
+  const backAction = () => {
+    
+    return true; 
+  };
+
+  const backHandler = BackHandler.addEventListener(
+    'hardwareBackPress',
+    backAction
+  );
+
+  return () => backHandler.remove();
+}, []);
+
+
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', top: hp('5%') }}>
+    <SafeAreaView style={{flex: 1}} >
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+      {isLoading && <LoadingOverlay />}
+    <View style={styles.container}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', top:  Platform.OS === 'web' ? 1: 0, display:windowWidth > 1000 ? 'none' : 'flex' }}>
           <Ionicons name="location-outline" size={RFValue(14)} color="black" />
           <Text style={{textAlign:'center', fontFamily:'Poppins-Bold', fontSize:RFValue(10)}}>{userAddress}</Text>
         </View>
-      <View style={{marginTop:hp('5%'), flexDirection:'row', alignItems:'center', justifyContent:'space-between',paddingHorizontal:wp('6%')}}>
+      <View style={{marginTop: Platform.OS === 'web' ? 3 :  hp('0%'), flexDirection:'row', alignItems:'center', justifyContent:'space-between',paddingHorizontal:wp('6%')}}>
 
            <TouchableOpacity onPress={handleRole}>
            <Image
@@ -347,15 +370,48 @@ const handlePress = (pharmacyId: string) => {
               style={styles.avatar}
             />
 
-          <View  style={{  bottom:hp('2.5%'), left:wp('8.5%'), backgroundColor: 'grey', borderRadius:35, width:wp('4%'), height:wp('3.7%'), borderWidth:1, borderColor:'white' }}>
-            <EvilIcons name="navicon" size={RFValue(12)} color="white" />
-          </View>
+          
           
            </TouchableOpacity>
+
+           {windowWidth > 1000 ? (
+        
+          
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 55, left: 70,}}>   
+           <TouchableOpacity  onPress={() => { navigation.navigate('HomeScreen')}}>  
+           <Text style={{fontFamily:'Poppins-Bold', fontSize:15}}>HOME</Text>
+           </TouchableOpacity>
+
+           <TouchableOpacity  onPress={() => { navigation.navigate('CategoryScreen')}}>  
+           <Text style={{fontFamily:'Poppins-Bold', fontSize:15}}>CATEGORY</Text>
+           </TouchableOpacity>
+
+           <TouchableOpacity  onPress={() => { navigation.navigate('CustomerOrderScreen')}}>  
+           <Text style={{fontFamily:'Poppins-Bold', fontSize:15}}>ORDER</Text>
+           </TouchableOpacity>
+
+           <TouchableOpacity  onPress={() => { navigation.navigate('AppointmentScreen')}}>  
+           <Text style={{fontFamily:'Poppins-Bold', fontSize:15}}>PHARMACISTS</Text>
+           </TouchableOpacity>
+          
+          </View>
+        
+      ) : (
+        <>
+        
+        </>
+      )}
+    
+
+    <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', top:10, display:windowWidth > 1000 ? 'none' : 'flex', right:114, }}>
+          <Ionicons name="menu" size={18} color="black" style={{ backgroundColor: 'white', borderRadius:10,   }}/>
+        
+        </View>
+
             
-          <View style={{flexDirection:'row', alignItems:'center', justifyContent:'center', gap:wp('3%')}}>
+          <View style={{flexDirection:'row', alignItems:'center', justifyContent:'center', gap:wp('4%')}}>
           <TouchableOpacity onPress={handleNotificationPress} style={{ position: 'relative' }}>
-            <Ionicons name="notifications-outline" size={RFValue(24)} color="black" />
+            <Ionicons name="notifications-outline" size={24} color="black" />
             {hasUnreadMessages && (
               <View style={styles.redDot} />
             )}
@@ -363,7 +419,7 @@ const handlePress = (pharmacyId: string) => {
         
         <TouchableOpacity onPress={handleCart}>
           <View style={styles.cartIconContainer}>
-            <Ionicons name="cart-outline" size={RFValue(24)} color="black" />
+            <Ionicons name="cart-outline" size={24} color="black" />
             {getCartItemCount() > 0 && (
               <View style={styles.cartItemCount}>
                 <Text style={styles.cartItemCountText}>{getCartItemCount()}</Text>
@@ -371,20 +427,29 @@ const handlePress = (pharmacyId: string) => {
             )}
           </View>
         </TouchableOpacity>
+
+        {Platform.OS === 'web' && width < 1000 && (
+          <NavMenu route={route} navigation={navigation}/>
+        )}
         </View>
 
+        
           
 
       </View>
 
-      {user && (
-        <View style={{paddingHorizontal:wp('6%'), marginTop:wp('-2%')}}>
-          <Text style={{ fontSize: RFValue(15), fontFamily: 'Poppins-Bold',}}>Hi, {user.username} </Text>
-          <Text style={{fontFamily:'Poppins-Regular', bottom:hp('1%'), fontSize:RFValue(9)}}>How Are You Today? </Text>
-          
-        </View>
-      )}
-
+      {user ? (
+    // Show username and email if user is signed in
+    <View style={{paddingHorizontal: wp('6%'), right: windowWidth > 1000 ? wp('55%') : 0}}>
+      <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 15 }}>Hi {user.username}</Text>
+      <Text style={{fontFamily: 'Poppins-Regular', bottom: hp('1%'), fontSize: 10}}>How Are You Today?</Text>
+    </View>
+  ) : (
+    // Show login button if user is not signed in
+    <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')} style={{ left: windowWidth > 1000 ? 90 : 23, paddingBottom: 3 }}>
+      <Text style={{ fontFamily: 'OpenSans-Bold', fontSize: 13, color: 'blue' }}>Login</Text>
+    </TouchableOpacity>
+  )}
 
 <View style={styles.searchContainer}>
         <Ionicons name="search-outline" size={20} color="gray" />
@@ -397,11 +462,16 @@ const handlePress = (pharmacyId: string) => {
       </View>
 
 
+
+
+  
     <View>
-    <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-around', gap:10}}>
-      <Text style={{fontFamily:'OpenSans-Bold', fontSize:RFValue(17), color:'black'}}>Pharmacies near you</Text>
+
+
+    <View style={{flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:windowWidth > 1000 ? wp('6%') : wp('6%'), marginTop:windowWidth > 1000 ? 20 : 0}}>
+      <Text style={{fontFamily:'Poppins-Bold', fontSize:16, color:'black'}}>Pharmacies near you</Text>
       <TouchableOpacity> 
-        <Text onPress={() => navigation.navigate('SeeAll')} style={{fontFamily:'Poppins-Regular', fontSize:RFValue(15), color:'blue', top:hp('0.4%')}}>See all</Text>
+        <Text onPress={() => navigation.navigate('SeeAll')} style={{fontFamily:'Poppins-Regular', fontSize:15, color:'blue', top:hp('0.4%')}}>See all</Text>
       </TouchableOpacity>
       
 
@@ -416,28 +486,31 @@ const handlePress = (pharmacyId: string) => {
   keyExtractor={(item) => item.id}
   horizontal
   contentContainerStyle={styles.pharmaciesContainer} // Use this style to align items properly
-  showsHorizontalScrollIndicator={true} // Hide scroll indicator if desired
+  showsHorizontalScrollIndicator={false} // Hide scroll indicator if desired
 />
    </View>
 
         <View style={{ flexDirection:'row', gap:1, alignItems:'center', padding: wp('1%'), left: wp('6%') }}> 
-        <Text style={{ fontSize: RFValue(17), fontFamily: 'Poppins-Bold', }}>Trending </Text>
-        <FontAwesome5 name="fire" size={16} color="red" />
+        <Text style={{ fontSize: 16, fontFamily: 'Poppins-Bold', }}>Trending </Text>
+        <FontAwesome5 name="fire" size={15} color="red" />
         </View>
 
-        {isLoading ? (
-        <LoadingOverlay />
-      ) : filteredProducts.length > 0 ? (
-        <View style={{ paddingBottom: hp('69%')}}>
+
+
+        {windowWidth  < 1000 ? (
+        <>
+           {filteredProducts.length > 0 ? (
+        <View style={{ paddingBottom:Platform.OS === 'web' ? hp('6%') :  hp('63.6%')}}>
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item.id}
           numColumns={2}
+          key={2}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => handleProductPress(item)}>
               <View style={styles.productContainer}>
-                <Image source={{ uri: item.imageUrls[0] }} style={styles.productImage} />
+                <Image source={{ uri: item.imageUrls[0] }} style={windowWidth > 1000 ? styles.largeProductImage : styles.productImage} />
                 <Text style={styles.productTitle}>{item.title}</Text>
                 <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
                 <View style={styles.discountContainer}>
@@ -445,8 +518,8 @@ const handlePress = (pharmacyId: string) => {
                   <Text style={styles.oldPrice}>N{item.costPrice}</Text>
                 </View>
                 <View style={{flexDirection: 'row', paddingBottom: wp('2%'),  left: wp('2.5%')  }}>
-                <Ionicons name="location-outline" size={15} color="black" />
-                <Text style={styles.productDistance}>{item.distance} miles away</Text>
+              
+                
                 </View>
               </View>
             </TouchableOpacity>
@@ -458,15 +531,81 @@ const handlePress = (pharmacyId: string) => {
           <Text style={styles.noResultsText}>No products found</Text>
         </View>
       )}
+        
+        </>
+      ) : (
+        <>
+
+         {filteredProducts.length > 0 ? (
+        <View style={{ paddingBottom: hp('3%')}}>
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={(item) => item.id}
+          numColumns={4}
+          key={4}
+          contentContainerStyle={styles.listContent}
+          
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleProductPress(item)}>
+              <View style={styles.largeProductContainer}>
+                <Image source={{ uri: item.imageUrls[0] }} style={windowWidth > 1000 ? styles.largeProductImage : styles.productImage} />
+                <Text style={windowWidth > 1000 ? styles.largeProductTitle : styles.productTitle}>{item.title}</Text>
+                <Text style={styles.productPrice}>N{item.price.toFixed(2)}</Text>
+                <View style={styles.discountContainer}>
+                  <Text style={styles.discountText}>-{item.percentageDiscount}%</Text>
+                  <Text style={styles.oldPrice}>N{item.costPrice}</Text>
+                </View>
+                <View style={{flexDirection: 'row', paddingBottom: wp('2%'),  left: wp('2.5%')  }}>
+              
+                
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+        </View>
+      ) : (
+        <View style={styles.noResults}>
+          <Text style={styles.noResultsText}>No products found</Text>
+        </View>
+      )}
+        </>
+      )}
+        
+        
   
   
 
            
+  
+  
+  {Platform.OS === 'web'? (
+        <>
+          
+        </>
+      ) : (
+        <>
+        <CostumerFooter route={route} navigation={navigation} />
+          <View
+            style={{
+            
+              backgroundColor: 'black',
+              height: hp('10%'),
+              position: 'absolute',
+              justifyContent: 'center',
+              alignItems: 'center',
+              top: hp('92.5%'),
+              right: wp('0%'),
+              left: 0,
+              zIndex: 1,
+            }}
+          />
         
+        </>
+      )}
+    
 
-      <CostumerFooter route={route} navigation={navigation}/>
-      <View style={{ bottom: hp('70.5%'), backgroundColor: 'black', height: hp('10%'), position: 'absolute', justifyContent: 'center', alignItems: 'center', top: hp('97.5%'), right: wp('0%'), left: 0, zIndex: 1  }}>
-              <></>
+
           </View>
     </SafeAreaView>
   );
@@ -475,13 +614,19 @@ const handlePress = (pharmacyId: string) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#D3D3D3'
+    backgroundColor: '#D3D3D3',
+    overflow: Platform.OS === 'web' ? 'scroll' : 'visible'
   },
-  
+
+ 
+
+ 
   avatar: {
-    width: RFValue(40),
-    height: RFValue(39),
+    width: RFValue(37),
+    height: RFValue(37),
     borderRadius: RFValue(50),
+    borderWidth: 1,
+    borderColor: 'grey',
 
   },
   cameraIcon: {
@@ -506,17 +651,25 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     elevation: 2,
-    marginTop:hp('-0.4%'),
-    marginBottom:hp('2%')
+    marginTop:hp('-0.1%'),
+    marginBottom:hp('2%'),
+    width: wp('90%'),
+    left: wp('2.5%'),
   },
-  searchInput: { flex: 1, height: hp('5%'), paddingHorizontal: 10, fontSize: RFValue(14) },
-  listContent: {   width: wp('95%'), left: wp('3%')},
+  searchInput: { flex: 1, height: hp('5%'), paddingHorizontal: 50, fontSize:14 },
+  listContent: { alignItems: 'center',justifyContent: 'center', },
   productContainer: { 
      margin:wp('2%'), backgroundColor: 'white', borderRadius: 10, 
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, elevation: 2 
   },
+  largeProductContainer: { 
+    margin:wp('1%'), backgroundColor: 'white', borderRadius: 10, 
+   shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, elevation: 2 
+ },
   productImage: { width: wp('43%'), height: hp('14%'), borderTopLeftRadius: 10, borderTopRightRadius: 10 },
-  productTitle: { fontSize: RFValue(14), fontWeight: 'bold', marginVertical: 5, paddingHorizontal: wp('3%') },
+  largeProductImage: { width: wp('20%'), height: hp('20%'), borderTopLeftRadius: 10, borderTopRightRadius: 10 },
+  productTitle: { fontSize: 15, fontWeight: 'bold', marginVertical: 5, paddingHorizontal: wp('3%') },
+  largeProductTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 5, paddingHorizontal: wp('3%') },
   productPrice: { fontSize: RFValue(12), color: 'green' , paddingHorizontal: wp('3%')},
   discountContainer: { flexDirection: 'row', gap: 5, paddingHorizontal: wp('3%') },
   discountText: { color: 'red', fontSize: RFValue(10), borderColor: 'black',borderWidth: 1,paddingHorizontal:3,borderRadius: 8},
@@ -541,6 +694,17 @@ const styles = StyleSheet.create({
     height: hp('24%'),
     backgroundColor: 'white'
   },
+  largePharmacyContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginVertical: hp('2%'),
+    marginRight: wp('4%'),
+  
+    marginHorizontal: wp('1%'),
+    borderRadius:10,
+    height: hp('40%'),
+    backgroundColor: 'white'
+  },
 
   pharmacyInfo: {
     flexDirection: 'column',
@@ -558,6 +722,14 @@ const styles = StyleSheet.create({
     borderColor:'white',
      borderWidth:1
   },
+  largePharmacyImage: {
+    width: wp('25%'),
+    height: hp('25%'),
+    borderTopLeftRadius:10,
+    borderTopRightRadius:10,
+    borderColor:'white',
+     borderWidth:1
+  },
   pharmacyName: {
     fontSize: RFValue(12),
     fontFamily: 'Poppins-Bold',
@@ -567,7 +739,7 @@ const styles = StyleSheet.create({
   },
   
   pharmacyDistance: {
-    fontSize: RFValue(12),
+    fontSize: 13,
     color: '#888',
     right:wp('4%'),
     fontFamily: 'Poppins-Regular',
@@ -599,10 +771,10 @@ const styles = StyleSheet.create({
   },
   redDot: {
     position: 'absolute',
-    right: -2,
-    top: -3,
-    width: 10,
-    height: 10,
+    right: 1,
+    top: -2,
+    width: 6,
+    height: 6,
     backgroundColor: 'red',
     borderRadius: 5,
   },

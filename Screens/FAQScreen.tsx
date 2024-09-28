@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, LayoutAnimation, Platform, UIManager, Dimensions, BackHandler, StatusBar } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
@@ -10,6 +10,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const FAQScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
 
   const toggleQuestion = (question: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -19,7 +21,7 @@ const FAQScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigatio
   const faqs = [
     {
       question: 'How do I contact the support team?',
-      answer: 'You can contact our support team by emailing support@epharma.com, have a live chat with us by clicking the emergency button on your dashboard or calling +2348161236962.',
+      answer: 'You can contact our support team by emailing support@epharma.com.ng, have a live chat with us by clicking the emergency button on your dashboard or calling +2348161236962.',
     },
     {
       question: 'How can I sell on ePharma?',
@@ -51,10 +53,21 @@ const FAQScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigatio
     navigation.goBack()
   }
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+  
+    return () => {
+      backHandler.remove();
+    };
+  }, [navigation]);
+
   return (
     <ScrollView style={styles.container}>
-
-<View style={{flexDirection:'row', justifyContent:'space-around', alignItems:'center', padding:wp('1%'), marginTop:hp('3%'),  marginBottom:hp('3%'), right:wp('15%')}}>
+    <StatusBar backgroundColor="black" barStyle="light-content"/>
+<View style={{flexDirection:'row', justifyContent:'space-around', alignItems:'center', padding:wp('1%'), marginTop: Platform.OS === 'web' ? -7:  hp('0%'),  marginBottom:hp('3%'), right:wp('15%')}}>
     <TouchableOpacity  onPress={handleback}>
     <Ionicons name="chevron-back" size={RFValue(25)} color="black" />
     </TouchableOpacity>

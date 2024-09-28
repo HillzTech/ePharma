@@ -57,9 +57,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   spinner: {
-    width: wp('20%'),
-    height: wp('20%'),
-    borderRadius: wp('10%'),
+    width: 80,
+    height: 80,
+    borderRadius: 50,
     borderWidth: 5,
     borderTopColor: '#FF5733', // Red-orange
     borderRightColor: '#33FF57', // Green
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     marginBottom: hp('3%'),
   },
   loadingText: {
-    fontSize: RFValue(16),
+    fontSize: 16,
     fontFamily: 'OpenSans-Bold',
     color: '#FFFFFF',
   },

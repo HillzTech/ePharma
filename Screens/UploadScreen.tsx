@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView, Modal, TouchableHighlight } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView, Modal, TouchableHighlight, Dimensions, BackHandler, StatusBar } from 'react-native';
 import { db } from '../Components/firebaseConfig';
 import { collection, getDocs, addDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/authContext';
@@ -15,6 +15,7 @@ import GetLocation from 'react-native-get-location';
 import SuccessfulUpload from './SuccessfulUpload';
 import { useCategories } from '../contexts/CategoriesContext';
 import { serverTimestamp } from 'firebase/firestore'; 
+import Geolocation from '@react-native-community/geolocation';
 
 
 const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
@@ -31,6 +32,10 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
     const [isLoading, setLoading] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [selectedTags, setSelectedTags] = useState<string[]>([]); // Replace 'string[]' with the type of your tags
+    const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
+
+
     
     const tags = ["OTC", "GSL", "Near Expiry", "Bulk"];
 
@@ -53,121 +58,138 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
     };
 
     const handleUpload = async () => {
-      if (!user) {
-          Alert.alert('Error', 'You must be logged in to upload products.');
-          return;
-      }
-  
-      if (!category || !title || !prescription || !pharmacyName || !productPrice || !costPrice || productImages.length === 0) {
-          Alert.alert('Error', 'Please fill in all fields and select at least one image.');
-          return;
-      }
-  
-      setLoading(true);
-      try {
-          // Get seller's current location
-          const sellerLocation = await GetLocation.getCurrentPosition({
-              enableHighAccuracy: true,
-              timeout: 15000,
-          });
-  
-          const { latitude, longitude } = sellerLocation;
-          console.log(`Seller Location - Latitude: ${latitude}, Longitude: ${longitude}`);
-  
-          // Check if the category exists
-          const categoryRef = doc(db, `categories/${category}`);
-          const categoryDoc = await getDoc(categoryRef);
-  
-          if (!categoryDoc.exists()) {
-              Alert.alert('Error', 'Selected category does not exist.');
-              setLoading(false);
-              return;
-          }
-  
-          // Generate a unique product ID
-          const productId = doc(collection(db, `categories/${category}/products`)).id;
-  
-          // Upload images to Firebase Storage
-          const imageUrls = await Promise.all(productImages.map(async (uri) => {
-              const response = await fetch(uri);
-              const blob = await response.blob();
-              const filename = uri.substring(uri.lastIndexOf('/') + 1);
-              const storageRef = ref(storage, `product_images/${filename}`);
-              await uploadBytes(storageRef, blob);
-              const url = await getDownloadURL(storageRef);
-              return url;
-          }));
-  
-          // Calculate percentage discount
-          const productPriceNum = parseFloat(productPrice);
-          const costPriceNum = parseFloat(costPrice);
-          const percentageDiscount = Math.ceil(((costPriceNum - productPriceNum) / costPriceNum) * 100);
-              
-  
-          // Prepare product data with image URLs and bulk info
-          const productData = {
-              userId: user.uid,  // Store user ID
-              title,
-              prescription,
-              location: { latitude, longitude },
-              pharmacyName,
-              price: productPriceNum,
-              costPrice: costPriceNum,
-              percentageDiscount: percentageDiscount, // Store as string for consistency
-              bulkQuantity: selectedTags.includes('Bulk') ? parseInt(bulkQuantity, 10) || 0 : null, // Use bulk quantity if "Bulk" tag is selected
-              imageUrls: imageUrls,
-              tags: selectedTags,
-              category, // Include the category field
-              createdAt: serverTimestamp(), 
-          };
-  
-          // Add product to category using the generated ID
-          const productsInCategoryRef = doc(db, `categories/${category}/products/${productId}`);
-          await setDoc(productsInCategoryRef, productData);
-  
-          // Add product to user's products collection using the same ID
-          const userProductsRef = doc(db, `users/${user.uid}/products/${productId}`);
-          await setDoc(userProductsRef, productData);
-  
-          // Add product to the pharmacy collection with a subcollection named after the user's ID
-          const pharmacyProductsRef = doc(db, `pharmacy/${user.uid}/products/${productId}`);
-          await setDoc(pharmacyProductsRef, productData);
-  
-          navigation.navigate(SuccessfulUpload);
-          setCategory('');
-          setTitle('');
-          setPrescription('');
-          setPharmacyName('');
-          setProductPrice('');
-          setCostPrice(''); // Reset cost price
-          setBulkQuantity(''); // Reset bulk quantity
-          setProductImages([]);
-          setSelectedTags([]); // Reset tags
-      } catch (error) {
-          console.error('Error uploading product: ', error);
-          Alert.alert('Error', `Failed to upload product.`);
-      } finally {
-          setLoading(false); // Ensure loading state is reset on completion
-      }
-  };
+        if (!user) {
+            Alert.alert('Error', 'You must be logged in to upload products.');
+            return;
+        }
+    
+        if (!category || !title || !prescription || !pharmacyName || !productPrice || !costPrice || productImages.length === 0) {
+            Alert.alert('Error', 'Please fill in all fields and select at least one image.');
+            return;
+        }
+    
+        setLoading(true);
+        try {
+            // Get seller's current location
+            Geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    console.log(`Seller Location - Latitude: ${latitude}, Longitude: ${longitude}`);
+    
+                    // Check if the category exists
+                    const categoryRef = doc(db, `categories/${category}`);
+                    const categoryDoc = await getDoc(categoryRef);
+    
+                    if (!categoryDoc.exists()) {
+                        Alert.alert('Error', 'Selected category does not exist.');
+                        setLoading(false);
+                        return;
+                    }
+    
+                    // Generate a unique product ID
+                    const productId = doc(collection(db, `categories/${category}/products`)).id;
+    
+                    // Upload images to Firebase Storage
+                    const imageUrls = await Promise.all(productImages.map(async (uri) => {
+                        const response = await fetch(uri);
+                        const blob = await response.blob();
+                        const filename = uri.substring(uri.lastIndexOf('/') + 1);
+                        const storageRef = ref(storage, `product_images/${filename}`);
+                        await uploadBytes(storageRef, blob);
+                        const url = await getDownloadURL(storageRef);
+                        return url;
+                    }));
+    
+                    // Calculate percentage discount
+                    const productPriceNum = parseFloat(productPrice);
+                    const costPriceNum = parseFloat(costPrice);
+                    const percentageDiscount = Math.ceil(((costPriceNum - productPriceNum) / costPriceNum) * 100);
+    
+                    // Prepare product data with image URLs and bulk info
+                    const productData = {
+                        userId: user.uid,  // Store user ID
+                        title,
+                        prescription,
+                        location: { latitude, longitude },
+                        pharmacyName,
+                        price: productPriceNum,
+                        costPrice: costPriceNum,
+                        percentageDiscount: percentageDiscount, // Store as string for consistency
+                        bulkQuantity: selectedTags.includes('Bulk') ? parseInt(bulkQuantity, 10) || 0 : null, // Use bulk quantity if "Bulk" tag is selected
+                        imageUrls: imageUrls,
+                        tags: selectedTags,
+                        category, // Include the category field
+                        createdAt: serverTimestamp(), 
+                    };
+    
+                    // Add product to category using the generated ID
+                    const productsInCategoryRef = doc(db, `categories/${category}/products/${productId}`);
+                    await setDoc(productsInCategoryRef, productData);
+    
+                    // Add product to user's products collection using the same ID
+                    const userProductsRef = doc(db, `users/${user.uid}/products/${productId}`);
+                    await setDoc(userProductsRef, productData);
+    
+                    // Add product to the pharmacy collection with a subcollection named after the user's ID
+                    const pharmacyProductsRef = doc(db, `pharmacy/${user.uid}/products/${productId}`);
+                    await setDoc(pharmacyProductsRef, productData);
+    
+                    navigation.navigate(SuccessfulUpload);
+                    setCategory('');
+                    setTitle('');
+                    setPrescription('');
+                    setPharmacyName('');
+                    setProductPrice('');
+                    setCostPrice(''); // Reset cost price
+                    setBulkQuantity(''); // Reset bulk quantity
+                    setProductImages([]);
+                    setSelectedTags([]); // Reset tags
+                },
+                (error) => {
+                    console.error('Error fetching location: ', error);
+                    Alert.alert('Error', 'Failed to fetch location.');
+                },
+                { enableHighAccuracy: true, timeout: 15000 }
+            );
+        } catch (error) {
+            console.error('Error uploading product: ', error);
+            Alert.alert('Error', `Failed to upload product.`);
+        } finally {
+            setLoading(false); // Ensure loading state is reset on completion
+        }
+    };
+    
   
     const goBack = async () => {
         navigation.navigate('RetailerScreen');
     };
 
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+          navigation.goBack();
+          return true;
+        });
+      
+        return () => {
+          backHandler.remove();
+        };
+      }, [navigation]);
+
     return (
         <SafeAreaView style={styles.container}>
             {isLoading && <LoadingOverlay />}
-            
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: hp('0.1%'), right: wp('7%'), bottom: hp('2%') }}>
+      <StatusBar backgroundColor="black" barStyle="light-content"/>
+        
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: hp('0.1%'), right: windowWidth > 1000 ? 220 : 40, bottom: hp('2%') }}>
                 <TouchableOpacity onPress={goBack}>
-                    <Ionicons name="chevron-back" size={RFValue(27)} color="black" />
+                    <Ionicons name="chevron-back" size={28} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.header}>Upload Product</Text>
             </View>
              
 
-            <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollViewContainer} >
+            <View style={{justifyContent: 'center', alignItems: 'center',}}>
             <TouchableOpacity onPress={() => setShowModal(true)} style={styles.input}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text>Category*</Text>
@@ -175,7 +197,7 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
                 </View>
                 {category && <Text style={{ fontFamily: 'Poppins-Regular' }}>{category}</Text>}
             </TouchableOpacity>
-
+            
             <TextInput
                 style={styles.input}
                 placeholder="Title*"
@@ -207,7 +229,7 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
                 onChangeText={setCostPrice}
                 keyboardType="numeric"
             />
-            <Text style={{ fontFamily: 'Poppins-Regular', fontSize: RFValue(9), left: wp('1%') }}>Write details below</Text>
+            <Text style={{ fontFamily: 'Poppins-Regular', fontSize: 10, left: wp('1%') }}>Write details below</Text>
             <TextInput
                 style={styles.presinput}
                 placeholder="Prescription*"
@@ -277,8 +299,9 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
             </ScrollView>
 
             <TouchableOpacity onPress={handleUpload} style={{ bottom: hp('1%') }}>
-                <Text style={{ textAlign: 'center', top: hp('3%'), backgroundColor: 'blue', width: wp('80%'), padding: wp('3.5%'), borderRadius: 6, color: 'white', fontFamily: 'Poppins-Bold', left: wp('3.5%'), marginBottom: hp('3.5%') }}>UPLOAD PRODUCT</Text>
+                <Text style={{ textAlign: 'center', top: hp('3%'), backgroundColor: 'blue', width: 300, padding: 12, borderRadius: 6, color: 'white', fontFamily: 'Poppins-Bold', left: 7, marginBottom: hp('3.5%') }}>UPLOAD PRODUCT</Text>
             </TouchableOpacity>
+            </View>
             </ScrollView>
             {/* Category Modal */}
             <Modal
@@ -301,11 +324,11 @@ const UploadScreen: React.FC<{ route: any, navigation: any }> = ({ route, naviga
                             >
                                 <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
                                     <Image source={{ uri: cat.imageUrl }} style={styles.categoryImage} />
-                                    <Text style={{ fontFamily: 'Poppins-Bold', fontSize: RFValue(15), left: wp('7%') }}>
+                                    <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 16, left: wp('7%') }}>
                                         {cat.name}
                                     </Text>
                                 </View>
-                                <AntDesign name="right" size={RFValue(16)} color="black" style={{ left: wp('2%') }} />
+                                <AntDesign name="right" size={17} color="black" style={{ left: wp('2%') }} />
                             </TouchableOpacity>
                         ))}
                         <TouchableHighlight style={styles.closeButton} onPress={() => setShowModal(false)}>
@@ -323,14 +346,16 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: wp('3%'),
         backgroundColor: '#D3D3D3',
+       
     },
     header: {
         fontSize: RFValue(20),
         fontFamily: 'OpenSans-Bold',
-        right: wp('10%'),
+        
     },
     input: {
-        height: hp('6%'),
+        height: 50,
+        width: 320,
         borderColor: 'white',
         borderWidth: 2,
         marginBottom: hp('1.5%'),
@@ -341,7 +366,8 @@ const styles = StyleSheet.create({
     },
 
     presinput: {
-      height: hp('15%'),
+      height: 120,
+      width: 320,
       borderColor: 'white',
       borderWidth: 2,
       marginBottom: hp('1.5%'),
@@ -355,18 +381,18 @@ const styles = StyleSheet.create({
     imagePicker: {
         marginBottom: hp('2%'),
         paddingVertical: hp('3%'),
-        width: wp('24%'),
-        height: wp('24%'),
+        width: 120,
+        height: 90,
         backgroundColor: 'white',
         borderRadius: 9,
         alignItems: 'center',
-        left: wp('31%')
+
     },
     imagePickerText: {
         color: 'black',
         fontFamily: 'Poppins-Regular',
         textAlign: 'center',
-        fontSize: RFValue(10),
+        fontSize: 10,
         
     },
     imagePreview: {
@@ -390,7 +416,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalHeader: {
-        fontSize: RFValue(18),
+        fontSize: 19,
         fontFamily: 'OpenSans-Bold',
         marginBottom: hp('1%'),
     },
@@ -402,26 +428,26 @@ const styles = StyleSheet.create({
         paddingHorizontal: wp('4%'),
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
-        width: wp('100%'),
+        width: 350,
     },
     categoryImage: {
-        width: wp('12%'),
-        height: hp('4%'),
+        width: 45,
+        height: 32,
         borderRadius: 5,
         marginLeft: wp('1%')
     },
     closeButton: {
         marginTop: hp('2%'),
-        padding: wp('3%'),
+        padding: 12,
         backgroundColor: '#007AFF',
         borderRadius: 5,
         alignItems: 'center',
-        width: wp('50%'),
+        width: 310,
     },
     closeButtonText: {
         color: 'white',
         fontFamily: 'OpenSans-Bold',
-        fontSize: RFValue(16)
+        fontSize: 17
     },
     tagContainer: {
         flexDirection: 'row',
@@ -449,7 +475,7 @@ const styles = StyleSheet.create({
     tagText: {
         color: 'blue',
         fontFamily: 'OpenSans-Bold',
-        fontSize: RFValue(15),
+        fontSize: 16,
         
     },
     tagTextSelected: {
